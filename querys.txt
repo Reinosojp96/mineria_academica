@@ -1,0 +1,7 @@
+Mineria de Datos: ("data mining" OR "mineria de datos" OR "data discovery") AND ("knowledge discovery" OR "KDD" OR "pattern discovery") NOT ("surface mining" OR "coal mining" OR "ore mining")
+KDD: ("knowledge discovery in databases" OR "KDD process" OR "knowledge discovery") AND ("database" OR "large dataset" OR "data warehouse") AND (algorithm OR methodology OR taxonomy)
+CRISP-DM: ("CRISP-DM" OR "CRISP DM" OR "cross industry standard process for data mining") AND ("phase" OR "process model" OR "methodology" OR "deployment")
+Modelos de Mineria de Datos: ("data mining model" OR "classification model" OR "regression model" OR "predictive model") AND (decision tree OR "neural network" OR "support vector" OR "association rule" OR "clustering" OR "naive bayes")
+Modelos Hibridos y Ensembles: ("hybrid model" OR "hybrid data mining" OR "ensemble learning" OR "hybrid classifier") AND (bagging OR boosting OR "random forest" OR "stacking" OR "hybrid neural network")
+Prediccion y Analitica Predictiva: ("predictive analytics" OR "prediction" OR "forecasting" OR "predictive model") AND ("machine learning" OR "data mining" OR "neural network") AND (accuracy OR "classification" OR "time series" OR "outlier")
+Data Warehouse y OLAP: ("data warehouse" OR "data warehousing" OR OLAP) AND ("dimensional modeling" OR "star schema" OR "snowflake schema" OR "fact table" OR "data mart" OR ETL)

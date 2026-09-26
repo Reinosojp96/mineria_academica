@@ -1,0 +1,46 @@
+# =====================================================================
+#  mineria_academica - dependencias
+#  ------------------------------------------------------------------
+#  Todo se instala con pip y el proceso es 100% local:
+#  sin GPU, sin APIs externas, sin claves y sin conexion a internet.
+#
+#  Instalacion:
+#      pip install -r requirements.txt
+# =====================================================================
+
+# --- Directas (las 4 que usa el codigo) -----------------------------
+
+# Lectura de texto de PDFs (arrastra pdfminer.six, Pillow, pypdfium2)
+pdfplumber>=0.11.0
+
+# TF-IDF + similitud del coseno (arrastra numpy, scipy, joblib)
+scikit-learn>=1.4.0
+
+# Graficos PNG en modo headless (sin pantalla, sin display)
+matplotlib>=3.8.0
+
+# Motor de plantillas para los informes .tex
+jinja2>=3.1.0
+
+
+# --- Opcionales -------------------------------------------------------
+# No son necesarias para ejecutar el pipeline: los comandos try/except de
+# cada modulo ya avisan y el proyecto sigue funcionando sin ellos.
+#
+#   pdflatex / xelatex / lualatex  -> motor LaTeX del sistema, NO es pip.
+#                                      En Windows: MiKTeX. En Linux: texlive.
+#
+# Ver README.md, seccion 2, para instalarlos y para el caso de que falten.
+
+
+# --- Versiones exactas con las que se probo ---------------------------
+# Python 3.10 - 3.14  |  Windows 10/11  |  Ubuntu 22.04/24.04
+#
+#   pdfplumber==0.11.10
+#   scikit-learn==1.9.1
+#   matplotlib==3.11.2
+#   Jinja2==3.1.6
+#
+# Para fijar exactamente esas versiones, descomenta y ejecuta:
+#   pip install pdfplumber==0.11.10 scikit-learn==1.9.1 \
+#               matplotlib==3.11.2 jinja2==3.1.6
