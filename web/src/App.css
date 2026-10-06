@@ -104,7 +104,12 @@
 .session-actions button:disabled { cursor: wait; opacity: 0.65; }
 
 .theme-library { display: flex; flex-wrap: wrap; gap: 8px; }
-.theme-chip { padding: 8px 12px; border-radius: 999px; background: #e5f3ef; color: #145847; font-weight: 700; overflow-wrap: anywhere; }
+.theme-chip { padding: 8px 12px; border: 1px solid #b8d9ce; border-radius: 999px; background: #e5f3ef; color: #145847; font-weight: 700; overflow-wrap: anywhere; cursor: pointer; }
+.theme-chip.selected { border-color: #145847; background: #145847; color: #ffffff; }
+.topic-documents { margin-top: 20px; padding: 16px; border-left: 3px solid #39806e; background: #f4f8f7; }
+.topic-documents h3 { margin: 0 0 8px; color: #17212b; }
+.topic-documents ul { margin: 0; padding-left: 20px; color: #334155; overflow-wrap: anywhere; }
+.topic-documents li + li { margin-top: 5px; }
 .theme-creator { display: flex; gap: 10px; margin: 18px 0; }
 .theme-creator input { flex: 1; }
 .document-library h3 { margin: 0 0 12px; }

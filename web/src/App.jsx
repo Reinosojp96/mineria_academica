@@ -24,6 +24,8 @@ function App() {
   const [busySessionId, setBusySessionId] = useState('')
   const [themeName, setThemeName] = useState('')
   const [documentLibrary, setDocumentLibrary] = useState([])
+  const [topicDocuments, setTopicDocuments] = useState([])
+  const [isLoadingTopic, setIsLoadingTopic] = useState(false)
   const fileInputRef = useRef(null)
   const resultsRef = useRef(null)
 
@@ -57,6 +59,32 @@ function App() {
     loadSessions()
   }, [])
 
+  useEffect(() => {
+    if (!selectedTopic) {
+      setTopicDocuments([])
+      return
+    }
+
+    let active = true
+    setIsLoadingTopic(true)
+    fetch(`${API_URL}/api/temas/${encodeURIComponent(selectedTopic)}/documentos`)
+      .then((response) => {
+        if (!response.ok) throw new Error('No se pudieron leer los documentos de este tema.')
+        return response.json()
+      })
+      .then((data) => {
+        if (active) setTopicDocuments(data.documentos ?? [])
+      })
+      .catch(() => {
+        if (active) setTopicDocuments([])
+      })
+      .finally(() => {
+        if (active) setIsLoadingTopic(false)
+      })
+
+    return () => { active = false }
+  }, [selectedTopic])
+
   const handleFiles = (fileList) => {
     const selected = Array.from(fileList).filter((file) =>
       file.name.toLowerCase().endsWith('.pdf') || file.name.toLowerCase().endsWith('.txt'),
@@ -72,8 +100,8 @@ function App() {
   }
 
   const runAnalysis = async () => {
-    if (!documents.length) {
-      setError('Sube al menos un documento para comenzar.')
+    if (!documents.length && !topicDocuments.length) {
+      setError('Selecciona un tema que tenga documentos o sube archivos.')
       return
     }
 
@@ -197,8 +225,27 @@ function App() {
 
         <div className="theme-library">
           {topics.map((topic) => (
-            <div key={topic} className="theme-chip">{topic}</div>
+            <button
+              key={topic}
+              type="button"
+              className={`theme-chip${selectedTopic === topic ? ' selected' : ''}`}
+              aria-pressed={selectedTopic === topic}
+              onClick={() => setSelectedTopic(topic)}
+            >
+              {topic}
+            </button>
           ))}
+        </div>
+
+        <div className="topic-documents">
+          <h3>{selectedTopic ? `Documentos en ${selectedTopic}` : 'Selecciona un tema'}</h3>
+          {isLoadingTopic ? (
+            <p className="empty-state">Leyendo carpeta…</p>
+          ) : topicDocuments.length ? (
+            <ul>{topicDocuments.map((document) => <li key={document}>{document}</li>)}</ul>
+          ) : (
+            <p className="empty-state">{selectedTopic ? 'Esta carpeta aún no contiene PDF o TXT.' : 'Elige una carpeta para ver sus documentos.'}</p>
+          )}
         </div>
 
         <form className="theme-creator" onSubmit={createTheme}>
@@ -335,11 +382,12 @@ function App() {
           <h2>Vista previa del trabajo</h2>
           <ul>
             <li><strong>{documents.length}</strong> documentos preparados</li>
+            <li><strong>{topicDocuments.length}</strong> documentos en la carpeta seleccionada</li>
             <li><strong>{topics.length}</strong> temas disponibles</li>
             <li>{selectedTopic ? `Tema: ${selectedTopic}` : 'Todos los temas'}</li>
           </ul>
-          <button className="primary-button" disabled={isLoading || !documents.length} onClick={runAnalysis}>
-            {isLoading ? 'Procesando…' : 'Analizar documentos'}
+          <button className="primary-button" disabled={isLoading || (!documents.length && !topicDocuments.length)} onClick={runAnalysis}>
+            {isLoading ? 'Procesando…' : documents.length ? 'Analizar documentos seleccionados' : 'Analizar carpeta del tema'}
           </button>
         </div>
       </section>

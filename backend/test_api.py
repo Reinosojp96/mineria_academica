@@ -56,6 +56,35 @@ class ApiTestCase(unittest.TestCase):
             self.assertTrue(payload["tex"])
             self.assertTrue((ARTIFACTS_DIR.parent / "documentos" / sample.name).exists())
 
+    def test_analysis_reads_selected_theme_folder_without_upload(self) -> None:
+        documents_dir = ARTIFACTS_DIR.parent / "documentos"
+        theme_dir = documents_dir / "Tema de Prueba Directa"
+        theme_dir.mkdir(exist_ok=True)
+        sample = theme_dir / "paper.txt"
+        sample.write_text(
+            "Knowledge discovery in databases uses data mining algorithms. "
+            "The KDD process includes data preparation, modeling and evaluation.",
+            encoding="utf-8",
+        )
+
+        try:
+            listing = self.client.get("/api/temas/Tema%20de%20Prueba%20Directa/documentos")
+            self.assertEqual(listing.status_code, 200, listing.text)
+            self.assertEqual(listing.json()["documentos"], ["paper.txt"])
+
+            response = self.client.post(
+                "/api/analyze",
+                data={"tema": "Tema de Prueba Directa", "umbral": "0.80", "minimo": "1", "sin_pdf": "true"},
+            )
+            self.assertEqual(response.status_code, 200, response.text)
+            payload = response.json()
+            self.assertEqual(payload["documentos"], 1)
+            self.assertIn("7 temas", payload["resumen"])
+            self.assertTrue(payload["graficos"])
+        finally:
+            sample.unlink(missing_ok=True)
+            theme_dir.rmdir()
+
     def test_document_folder_can_be_listed(self) -> None:
         document_path = ARTIFACTS_DIR.parent / "documentos" / "lista.txt"
         document_path.write_text("documento de prueba", encoding="utf-8")

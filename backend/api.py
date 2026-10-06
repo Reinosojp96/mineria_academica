@@ -106,10 +106,22 @@ def _normalize_theme_name(theme: str) -> str:
     if not theme:
         return theme
     candidates = {" ": "_", "-": "_"}
-    normalized = theme.strip()
+    normalized = theme.strip().lower()
     for old, new in candidates.items():
         normalized = normalized.replace(old, new)
     return normalized
+
+
+def _theme_directory(theme: str) -> Path | None:
+    normalized = _normalize_theme_name(theme)
+    return next(
+        (
+            path
+            for path in DOCUMENTS_DIR.iterdir()
+            if path.is_dir() and _normalize_theme_name(path.name) == normalized
+        ),
+        None,
+    )
 
 
 def _list_output_files(directory: Path, suffixes: set[str]) -> list[str]:
@@ -145,6 +157,19 @@ def crear_tema(nombre: Annotated[str, Form()] = "") -> dict[str, str]:
         raise HTTPException(status_code=409, detail="El tema ya existe.")
     tema_dir.mkdir(parents=True, exist_ok=False)
     return {"status": "created", "tema": tema}
+
+
+@app.get("/api/temas/{tema}/documentos")
+def documentos_tema(tema: str) -> dict[str, object]:
+    theme_dir = _theme_directory(tema)
+    if theme_dir is None:
+        raise HTTPException(status_code=404, detail="Tema no encontrado")
+    files = sorted(
+        path.relative_to(theme_dir).as_posix()
+        for path in theme_dir.rglob("*")
+        if path.is_file() and path.suffix.lower() in ALLOWED_EXTENSIONS
+    )
+    return {"tema": theme_dir.name, "documentos": files, "total": len(files)}
 
 
 @app.get("/api/documentos")
@@ -230,14 +255,25 @@ def artifact(session_id: str, filename: str) -> FileResponse:
 
 @app.post("/api/analyze")
 async def analyze(
-    files: Annotated[list[UploadFile], File(description="PDF o TXT")],
+    files: Annotated[list[UploadFile] | None, File(description="PDF o TXT")] = None,
     umbral: Annotated[float, Form()] = 0.80,
     minimo: Annotated[int, Form()] = 5,
     sin_pdf: Annotated[bool, Form()] = True,
     tema: Annotated[str | None, Form()] = None,
 ) -> AnalysisResult:
-    if not files:
-        raise HTTPException(status_code=400, detail="Sube al menos un documento.")
+    files = files or []
+    selected_theme_dir = _theme_directory(tema) if tema else None
+    if not files and selected_theme_dir is None:
+        raise HTTPException(status_code=400, detail="Selecciona un tema con documentos o sube archivos.")
+
+    if selected_theme_dir is not None:
+        theme_files = [
+            path
+            for path in selected_theme_dir.rglob("*")
+            if path.is_file() and path.suffix.lower() in ALLOWED_EXTENSIONS
+        ]
+        if not theme_files and not files:
+            raise HTTPException(status_code=400, detail="La carpeta del tema no contiene archivos PDF o TXT.")
 
     for file in files:
         if file.filename is None:
@@ -247,7 +283,7 @@ async def analyze(
 
     if tema:
         normalized = _normalize_theme_name(tema)
-        if normalized not in queries.TEMAS and normalized not in {path.name for path in DOCUMENTS_DIR.iterdir() if path.is_dir()}:
+        if normalized not in queries.TEMAS and selected_theme_dir is None:
             raise HTTPException(status_code=400, detail="El tema no existe")
 
     session_id = tempfile.mkdtemp(prefix="analysis_", dir=str(ARTIFACTS_DIR))
@@ -263,47 +299,52 @@ async def analyze(
             if upload.size and upload.size > UPLOAD_LIMIT:
                 raise HTTPException(status_code=413, detail=f"Archivo demasiado grande: {upload.filename}")
             file_bytes = await upload.read()
-            target = input_dir / _safe_filename(upload.filename)
-            target.write_bytes(file_bytes)
+            persisted_dir = selected_theme_dir or DOCUMENTS_DIR
+            persisted_name = _safe_filename(upload.filename)
+            persisted = persisted_dir / persisted_name
+            if persisted.exists():
+                persisted = persisted_dir / f"{Path(persisted_name).stem}_{uuid.uuid4().hex[:8]}{Path(persisted_name).suffix}"
+            persisted.write_bytes(file_bytes)
 
-            persisted_dir = DOCUMENTS_DIR
-            if tema:
-                persisted_dir = DOCUMENTS_DIR / _safe_folder_name(tema)
-                persisted_dir.mkdir(parents=True, exist_ok=True)
+            if selected_theme_dir is None:
+                (input_dir / persisted.name).write_bytes(file_bytes)
 
-            persisted = persisted_dir / _safe_filename(upload.filename)
-            if not persisted.exists():
-                persisted.write_bytes(file_bytes)
+        analysis_dir = selected_theme_dir or input_dir
 
         def run_pipeline() -> dict[str, object]:
             if tema:
-                if tema in queries.TEMAS:
+                resolved = tema if tema in queries.TEMAS else main._resolver_tema(_normalize_theme_name(tema))
+                if resolved:
+                    result = main.procesar_tema(
+                        resolved,
+                        analysis_dir,
+                        output_dir,
+                        umbral=umbral,
+                        minimo=minimo,
+                        compilar=not sin_pdf,
+                    )
+                    return {
+                        "tema": resolved,
+                        "result": result,
+                        "documentos": result["documentos"],
+                    }
+                if selected_theme_dir is None:
                     tema_value = tema
-                elif tema in {path.name for path in DOCUMENTS_DIR.iterdir() if path.is_dir()}:
-                    theme_id = _normalize_theme_name(tema)
-                    resolved = main._resolver_tema(theme_id)
-                    tema_value = resolved or theme_id
-                else:
-                    resolved = main._resolver_tema(tema)
-                    if not resolved:
-                        raise ValueError(f"Tema no válido: {tema}")
-                    tema_value = resolved
-                result = main.procesar_tema(
-                    tema_value,
-                    input_dir,
+                    raise ValueError(f"Tema no válido: {tema_value}")
+
+                result = main.pipeline_completo(
+                    analysis_dir,
                     output_dir,
                     umbral=umbral,
                     minimo=minimo,
                     compilar=not sin_pdf,
+                    verbose=False,
                 )
-                return {
-                    "tema": tema_value,
-                    "result": result,
-                    "documentos": result["documentos"],
-                }
+                result["tema_carpeta"] = selected_theme_dir.name
+                return result
 
             return main.pipeline_completo(
-                input_dir,
+                analysis_dir,
                 output_dir,
                 umbral=umbral,
                 minimo=minimo,
@@ -313,10 +354,16 @@ async def analyze(
 
         result = await asyncio.to_thread(run_pipeline)
         if tema:
-            payload = result["result"]
-            documentos = int(payload["documentos"])
-            temas = [str(result["tema"])]
-            resumen = f"Tema procesado: {result['tema']}"
+            if "result" in result:
+                payload = result["result"]
+                documentos = int(payload["documentos"])
+                temas = [str(result["tema"])]
+                resumen = f"Tema procesado: {result['tema']}"
+            else:
+                payload = result
+                documentos = int(payload["documentos"])
+                temas = [str(item) for item in payload["temas"].keys()]
+                resumen = f"Carpeta {result['tema_carpeta']}: {documentos} documentos analizados en {len(temas)} temas."
         else:
             payload = result
             documentos = int(payload["documentos"])
