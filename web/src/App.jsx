@@ -3,6 +3,13 @@ import './App.css'
 
 const API_URL = 'http://localhost:8000'
 
+function artifactTitle(url) {
+  return decodeURIComponent(url.split('/').pop())
+    .replace(/\.[^.]+$/, '')
+    .replace(/^grafico[_-]?/i, '')
+    .replace(/[_-]/g, ' ')
+}
+
 function App() {
   const [topics, setTopics] = useState([])
   const [selectedTopic, setSelectedTopic] = useState('')
@@ -13,16 +20,41 @@ function App() {
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState('')
   const [result, setResult] = useState(null)
+  const [sessions, setSessions] = useState([])
+  const [busySessionId, setBusySessionId] = useState('')
+  const [themeName, setThemeName] = useState('')
+  const [documentLibrary, setDocumentLibrary] = useState([])
   const fileInputRef = useRef(null)
+  const resultsRef = useRef(null)
 
-  useEffect(() => {
+  const loadSessions = () => {
+    fetch(`${API_URL}/api/sessions`)
+      .then((response) => response.json())
+      .then((data) => setSessions(data.sessions ?? []))
+      .catch(() => setError('No fue posible cargar las sesiones guardadas.'))
+  }
+
+  const loadTopics = () => {
     fetch(`${API_URL}/api/temas`)
       .then((response) => response.json())
       .then((data) => {
         setTopics(data.temas)
-        setSelectedTopic(data.temas[0] ?? '')
+        setSelectedTopic((current) => current || data.temas[0] || '')
       })
       .catch(() => setError('No fue posible conectar con el servicio local.'))
+  }
+
+  const loadDocumentLibrary = () => {
+    fetch(`${API_URL}/api/documentos`)
+      .then((response) => response.json())
+      .then((data) => setDocumentLibrary(data.documentos ?? []))
+      .catch(() => setError('No fue posible cargar la biblioteca de documentos.'))
+  }
+
+  useEffect(() => {
+    loadTopics()
+    loadDocumentLibrary()
+    loadSessions()
   }, [])
 
   const handleFiles = (fileList) => {
@@ -66,10 +98,75 @@ function App() {
         throw new Error(payload.detail || 'La solicitud no pudo procesarse.')
       }
       setResult(payload)
+      loadSessions()
     } catch (requestError) {
       setError(requestError.message)
     } finally {
       setIsLoading(false)
+    }
+  }
+
+  const restoreSession = async (sessionId) => {
+    setBusySessionId(sessionId)
+    try {
+      const response = await fetch(`${API_URL}/api/sessions/${sessionId}`)
+      const payload = await response.json()
+      if (!response.ok) {
+        throw new Error(payload.detail || 'No se pudo restaurar la sesión.')
+      }
+      setResult(payload)
+      setDocuments([])
+      setError('')
+      requestAnimationFrame(() => resultsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }))
+    } catch (requestError) {
+      setError(requestError.message)
+    } finally {
+      setBusySessionId('')
+    }
+  }
+
+  const deleteSession = async (sessionId) => {
+    setBusySessionId(sessionId)
+    try {
+      const response = await fetch(`${API_URL}/api/sessions/${sessionId}`, { method: 'DELETE' })
+      const payload = await response.json()
+      if (!response.ok) {
+        throw new Error(payload.detail || 'No se pudo eliminar la sesión.')
+      }
+      if (result?.session_id === sessionId) {
+        setResult(null)
+      }
+      setSessions((current) => current.filter((session) => session.session_id !== sessionId))
+      setError('')
+    } catch (requestError) {
+      setError(requestError.message)
+    } finally {
+      setBusySessionId('')
+    }
+  }
+
+  const createTheme = async (event) => {
+    event.preventDefault()
+    if (!themeName.trim()) {
+      setError('Escribe un nombre para el nuevo tema.')
+      return
+    }
+
+    try {
+      const response = await fetch(`${API_URL}/api/temas`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: new URLSearchParams({ nombre: themeName }),
+      })
+      const payload = await response.json()
+      if (!response.ok) {
+        throw new Error(payload.detail || 'No se pudo crear el tema.')
+      }
+      setThemeName('')
+      loadTopics()
+      setError('')
+    } catch (requestError) {
+      setError(requestError.message)
     }
   }
 
@@ -88,6 +185,77 @@ function App() {
           Servicio local disponible
         </div>
       </header>
+
+      <section className="panel session-panel">
+        <div className="section-heading">
+          <div>
+            <p className="section-label">Biblioteca de temas</p>
+            <h2>Temas disponibles</h2>
+          </div>
+          <button className="secondary-button" onClick={() => { loadTopics(); loadDocumentLibrary(); }}>Actualizar</button>
+        </div>
+
+        <div className="theme-library">
+          {topics.map((topic) => (
+            <div key={topic} className="theme-chip">{topic}</div>
+          ))}
+        </div>
+
+        <form className="theme-creator" onSubmit={createTheme}>
+          <input
+            type="text"
+            value={themeName}
+            onChange={(event) => setThemeName(event.target.value)}
+            placeholder="Nombre del nuevo tema"
+            aria-label="Nombre del nuevo tema"
+          />
+          <button className="primary-button small-button" type="submit">Crear tema</button>
+        </form>
+
+        <div className="document-library">
+          <h3>Documentos guardados</h3>
+          {documentLibrary.length ? (
+            <ul>
+              {documentLibrary.map((document) => <li key={document}>{document}</li>)}
+            </ul>
+          ) : (
+            <p className="empty-state">No hay documentos guardados en la biblioteca.</p>
+          )}
+        </div>
+      </section>
+
+      <section className="panel session-panel">
+        <div className="section-heading">
+          <div>
+            <p className="section-label">Sesiones guardadas</p>
+            <h2>Continuar análisis anteriores</h2>
+          </div>
+          <button className="secondary-button" onClick={loadSessions}>Actualizar</button>
+        </div>
+
+        {sessions.length ? (
+          <div className="session-list">
+            {sessions.map((session) => (
+              <article key={session.session_id} className="session-item">
+                <div>
+                  <strong>{session.resumen || 'Sesión sin resumen'}</strong>
+                  <span>{session.documentos} documentos · {session.temas?.length ?? 0} temas</span>
+                </div>
+                <div className="session-actions">
+                  <button className="primary-button small-button" disabled={busySessionId === session.session_id} onClick={() => restoreSession(session.session_id)}>
+                    {busySessionId === session.session_id ? 'Cargando…' : 'Restaurar'}
+                  </button>
+                  <button className="secondary-button small-button danger-button" disabled={busySessionId === session.session_id} onClick={() => deleteSession(session.session_id)}>
+                    {busySessionId === session.session_id ? 'Procesando…' : 'Eliminar'}
+                  </button>
+                </div>
+              </article>
+            ))}
+          </div>
+        ) : (
+          <p className="empty-state">Todavía no hay sesiones guardadas. Un análisis nuevo aparecerá aquí.</p>
+        )}
+      </section>
 
       <section className="panel upload-panel">
         <div className="section-heading">
@@ -179,7 +347,7 @@ function App() {
       {error && <div className="notice error">{error}</div>}
 
       {result && (
-        <section className="panel results-panel">
+        <section className="panel results-panel" ref={resultsRef}>
           <div className="section-heading">
             <div>
               <p className="section-label">4. Resultados</p>
@@ -193,8 +361,8 @@ function App() {
           <div className="artifact-grid">
             {result.graficos.map((url) => (
               <a key={url} href={url} target="_blank" rel="noreferrer" className="artifact-card">
-                <img src={`${API_URL}${url}`} alt="Gráfico del análisis" />
-                <span>Gráfico</span>
+                <img src={`${API_URL}${url}`} alt={`Gráfico ${artifactTitle(url)}`} loading="lazy" />
+                <span>{artifactTitle(url)}</span>
               </a>
             ))}
           </div>

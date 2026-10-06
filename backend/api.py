@@ -6,9 +6,10 @@ import os
 import re
 import shutil
 import tempfile
+import uuid
 from pathlib import Path
 from typing import Annotated
-from urllib.parse import quote
+from urllib.parse import quote, unquote
 
 from fastapi import FastAPI, File, Form, HTTPException, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
@@ -21,6 +22,7 @@ import queries
 
 BASE_DIR = Path(__file__).resolve().parent
 ARTIFACTS_DIR = BASE_DIR / "artifacts"
+DOCUMENTS_DIR = BASE_DIR / "documentos"
 UPLOAD_LIMIT = 100 * 1024 * 1024
 ALLOWED_EXTENSIONS = {".pdf", ".txt"}
 
@@ -53,7 +55,8 @@ class AnalysisResult(BaseModel):
 
 
 ARTIFACTS_DIR.mkdir(exist_ok=True)
-app.mount("/api/artifacts", StaticFiles(directory=str(ARTIFACTS_DIR)), name="artifacts")
+DOCUMENTS_DIR.mkdir(exist_ok=True)
+app.mount("/api/documentos", StaticFiles(directory=str(DOCUMENTS_DIR)), name="documentos")
 
 
 def _safe_filename(filename: str) -> str:
@@ -62,8 +65,51 @@ def _safe_filename(filename: str) -> str:
     return safe or "documento"
 
 
+def _safe_folder_name(nombre: str) -> str:
+    safe = os.path.basename(nombre.strip())
+    safe = re.sub(r"[^A-Za-z0-9._ -]", "_", safe).strip()
+    return safe or "nuevo_tema"
+
+
+def _save_document(upload: UploadFile, source: Path) -> str:
+    suffix = Path(upload.filename).suffix.lower()
+    unique_name = f"{Path(upload.filename).stem}_{uuid.uuid4().hex}{suffix}"
+    target = source / unique_name
+    target.write_bytes(upload.file.read())
+    return unique_name
+
+
 def _artifact_url(session_id: str, filename: str) -> str:
     return f"/api/artifacts/{quote(session_id)}/{quote(filename)}"
+
+
+def _session_summary(session_dir: Path, summary: dict[str, object]) -> dict[str, object]:
+    normalized = dict(summary)
+    normalized["session_id"] = session_dir.name
+    for artifact_type in ("graficos", "tex", "pdf", "csv"):
+        artifacts = normalized.get(artifact_type, [])
+        if isinstance(artifacts, list):
+            normalized[artifact_type] = [
+                _artifact_url(session_dir.name, unquote(str(url)).replace("\\", "/").rsplit("/", 1)[-1])
+                for url in artifacts
+            ]
+    return normalized
+
+
+def _session_directory(session_id: str) -> Path:
+    if not session_id or Path(session_id).name != session_id or session_id in {".", ".."}:
+        raise HTTPException(status_code=404, detail="Sesión no encontrada")
+    return ARTIFACTS_DIR / session_id
+
+
+def _normalize_theme_name(theme: str) -> str:
+    if not theme:
+        return theme
+    candidates = {" ": "_", "-": "_"}
+    normalized = theme.strip()
+    for old, new in candidates.items():
+        normalized = normalized.replace(old, new)
+    return normalized
 
 
 def _list_output_files(directory: Path, suffixes: set[str]) -> list[str]:
@@ -81,13 +127,102 @@ def health() -> dict[str, str]:
 
 @app.get("/api/temas")
 def temas() -> dict[str, list[str]]:
-    return {"temas": queries.listar_temas()}
+    themes = [
+        path.name
+        for path in sorted(DOCUMENTS_DIR.iterdir())
+        if path.is_dir() and not path.name.startswith('.')
+    ]
+    return {"temas": themes or queries.listar_temas()}
+
+
+@app.post("/api/temas")
+def crear_tema(nombre: Annotated[str, Form()] = "") -> dict[str, str]:
+    tema = _safe_folder_name(nombre)
+    if not tema:
+        raise HTTPException(status_code=400, detail="Ingresa un nombre para el tema.")
+    tema_dir = DOCUMENTS_DIR / tema
+    if tema_dir.exists():
+        raise HTTPException(status_code=409, detail="El tema ya existe.")
+    tema_dir.mkdir(parents=True, exist_ok=False)
+    return {"status": "created", "tema": tema}
+
+
+@app.get("/api/documentos")
+def documentos() -> dict[str, list[str]]:
+    return {
+        "documentos": [
+            path.name
+            for path in sorted(DOCUMENTS_DIR.iterdir())
+            if path.is_file() and path.suffix.lower() in ALLOWED_EXTENSIONS
+        ]
+    }
+
+
+@app.get("/api/documentos/{filename}")
+def documento(filename: str) -> FileResponse:
+    safe_name = _safe_filename(filename)
+    file_path = DOCUMENTS_DIR / safe_name
+    if not file_path.exists() or not file_path.is_file():
+        raise HTTPException(status_code=404, detail="Documento no encontrado")
+    return FileResponse(file_path)
+
+
+@app.get("/api/sessions")
+def sessions() -> dict[str, list[dict[str, object]]]:
+    session_list: list[dict[str, object]] = []
+    for session_dir in sorted(ARTIFACTS_DIR.iterdir(), reverse=True):
+        if not session_dir.is_dir():
+            continue
+        summary_path = session_dir / "salida" / "summary.json"
+        if not summary_path.exists():
+            continue
+        try:
+            summary = json.loads(summary_path.read_text(encoding="utf-8"))
+        except json.JSONDecodeError:
+            continue
+        if not isinstance(summary, dict) or "session_id" not in summary:
+            continue
+        normalized = _session_summary(session_dir, summary)
+        session_list.append({
+            "session_id": normalized["session_id"],
+            "documentos": normalized.get("documentos", 0),
+            "temas": normalized.get("temas", []),
+            "resumen": normalized.get("resumen", ""),
+            "created_at": session_dir.name,
+        })
+    return {"sessions": session_list}
+
+
+@app.get("/api/sessions/{session_id}")
+def session(session_id: str) -> dict[str, object]:
+    session_dir = _session_directory(session_id)
+    summary_path = session_dir / "salida" / "summary.json"
+    if not summary_path.exists():
+        raise HTTPException(status_code=404, detail="Sesión no encontrada")
+    try:
+        summary = json.loads(summary_path.read_text(encoding="utf-8"))
+    except json.JSONDecodeError as exc:
+        raise HTTPException(status_code=500, detail="Resultado inválido") from exc
+    if not isinstance(summary, dict):
+        raise HTTPException(status_code=500, detail="Resultado inválido")
+    return _session_summary(session_dir, summary)
+
+
+@app.delete("/api/sessions/{session_id}")
+def delete_session(session_id: str) -> dict[str, str]:
+    session_dir = _session_directory(session_id)
+    summary_path = session_dir / "salida" / "summary.json"
+    if not summary_path.exists():
+        raise HTTPException(status_code=404, detail="Sesión no encontrada")
+    shutil.rmtree(session_dir)
+    return {"status": "deleted", "session_id": session_id}
 
 
 @app.get("/api/artifacts/{session_id}/{filename}")
 def artifact(session_id: str, filename: str) -> FileResponse:
+    session_dir = _session_directory(session_id)
     safe_name = _safe_filename(filename)
-    file_path = ARTIFACTS_DIR / session_id / "salida" / safe_name
+    file_path = session_dir / "salida" / safe_name
     if not file_path.exists() or not file_path.is_file():
         raise HTTPException(status_code=404, detail="Archivo no encontrado")
     return FileResponse(file_path)
@@ -110,8 +245,14 @@ async def analyze(
         if Path(file.filename).suffix.lower() not in ALLOWED_EXTENSIONS:
             raise HTTPException(status_code=400, detail="Solo se aceptan PDFs y TXT.")
 
+    if tema:
+        normalized = _normalize_theme_name(tema)
+        if normalized not in queries.TEMAS and normalized not in {path.name for path in DOCUMENTS_DIR.iterdir() if path.is_dir()}:
+            raise HTTPException(status_code=400, detail="El tema no existe")
+
     session_id = tempfile.mkdtemp(prefix="analysis_", dir=str(ARTIFACTS_DIR))
     session_path = Path(session_id)
+    session_key = session_path.name
     input_dir = session_path / "documentos"
     input_dir.mkdir(parents=True, exist_ok=True)
     output_dir = session_path / "salida"
@@ -125,15 +266,28 @@ async def analyze(
             target = input_dir / _safe_filename(upload.filename)
             target.write_bytes(file_bytes)
 
+            persisted_dir = DOCUMENTS_DIR
+            if tema:
+                persisted_dir = DOCUMENTS_DIR / _safe_folder_name(tema)
+                persisted_dir.mkdir(parents=True, exist_ok=True)
+
+            persisted = persisted_dir / _safe_filename(upload.filename)
+            if not persisted.exists():
+                persisted.write_bytes(file_bytes)
+
         def run_pipeline() -> dict[str, object]:
             if tema:
-                if tema not in queries.TEMAS:
+                if tema in queries.TEMAS:
+                    tema_value = tema
+                elif tema in {path.name for path in DOCUMENTS_DIR.iterdir() if path.is_dir()}:
+                    theme_id = _normalize_theme_name(tema)
+                    resolved = main._resolver_tema(theme_id)
+                    tema_value = resolved or theme_id
+                else:
                     resolved = main._resolver_tema(tema)
                     if not resolved:
                         raise ValueError(f"Tema no válido: {tema}")
                     tema_value = resolved
-                else:
-                    tema_value = tema
                 result = main.procesar_tema(
                     tema_value,
                     input_dir,
@@ -176,13 +330,13 @@ async def analyze(
             "csv": _list_output_files(output_dir, {".csv"}),
         }
         summary = {
-            "session_id": session_id,
+            "session_id": session_key,
             "documentos": documentos,
             "temas": temas,
-            "graficos": [_artifact_url(session_id, Path(path).name) for path in output_files["png"]],
-            "tex": [_artifact_url(session_id, Path(path).name) for path in output_files["tex"]],
-            "pdf": [_artifact_url(session_id, Path(path).name) for path in output_files["pdf"]],
-            "csv": [_artifact_url(session_id, Path(path).name) for path in output_files["csv"]],
+            "graficos": [_artifact_url(session_key, Path(path).name) for path in output_files["png"]],
+            "tex": [_artifact_url(session_key, Path(path).name) for path in output_files["tex"]],
+            "pdf": [_artifact_url(session_key, Path(path).name) for path in output_files["pdf"]],
+            "csv": [_artifact_url(session_key, Path(path).name) for path in output_files["csv"]],
             "resumen": resumen,
         }
         (output_dir / "summary.json").write_text(json.dumps(summary), encoding="utf-8")
