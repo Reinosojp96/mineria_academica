@@ -1,0 +1,439 @@
+PS C:\Users\aethe\Documentos\mineria de datos\mineria_academica> "c:/Users/aethe/Documentos/mineria de datos/mineria_academica/.venv/Scripts/python.exe" main.py --todo --sin-pdf
+En línea: 1 Carácter: 89
++ ...  de datos/mineria_academica/.venv/Scripts/python.exe" main.py --todo  ...
++                                                           ~~~~~~~
+Token 'main.py' inesperado en la expresión o la instrucción.
+    + CategoryInfo          : ParserError: (:) [], ParentContainsErrorRecordEx 
+   ception
+    + FullyQualifiedErrorId : UnexpectedToken
+ 
+PS C:\Users\aethe\Documentos\mineria de datos\mineria_academica> & "c:/Users/aethe/Documentos/mineria de datos/mineria_academica/.venv/Scripts/python.exe" main.py --todo --sin-pdf
+
+==============================================================================
+                    MINERIA ACADEMICA - PIPELINE COMPLETO                     
+==============================================================================
+Carpeta de documentos : C:\Users\aethe\Documentos\mineria de datos\mineria_academica\documentos
+Carpeta de salida     : C:\Users\aethe\Documentos\mineria de datos\mineria_academica\salida
+Umbral de relevancia  : 80% (minimo 5 resultados)
+Plantilla LaTeX       : C:\Users\aethe\Documentos\mineria de datos\mineria_academica\plantillas\documento.tex.j2
+Motor LaTeX           : NO INSTALADO (se generara solo el .tex)
+
+============================================================
+              PASO 1/6 - INGESTA DE DOCUMENTOS              
+============================================================
+[AVISO] No hay archivos .pdf ni .txt en 'C:\Users\aethe\Documentos\mineria de datos\mineria_academica\documentos'.
+
+[AVISO] No hay documentos en la carpeta. Se generaran igualmente
+        los 7 informes .tex (con la consulta de cada tema) para que
+        sirvan de plantilla. Copia tus .pdf/.txt en: C:\Users\aethe\Documentos\mineria de datos\mineria_academica\documentos
+
+============================================================
+          PASO 2/6 - RELEVANCIA (TF-IDF + coseno)           
+============================================================
+
+--- Tema: Mineria de Datos [mineria_de_datos]
+[AVISO] No hay documentos para evaluar.
+
+--- Tema: KDD (Knowledge Discovery in Databases) [kdd]
+[AVISO] No hay documentos para evaluar.
+
+--- Tema: CRISP-DM (Metodologia de Mineria de Datos) [crisp_dm]
+[AVISO] No hay documentos para evaluar.
+
+--- Tema: Modelos de Mineria de Datos [modelo]
+[AVISO] No hay documentos para evaluar.
+
+--- Tema: Modelos Hibridos y Ensembles [modelo_hibrido]
+[AVISO] No hay documentos para evaluar.
+
+--- Tema: Prediccion y Analitica Predictiva [prediccion]
+[AVISO] No hay documentos para evaluar.
+
+--- Tema: Data Warehouse y OLAP [data_warehouse]
+[AVISO] No hay documentos para evaluar.
+
+============================================================
+             PASO 3/6 - CLASIFICACION POR TEMA              
+============================================================
+[AVISO] No hay documentos para clasificar.
+
+============================================================
+                    PASO 4/6 - GRAFICOS                     
+============================================================
+[AVISO] Sin conteo de temas; se omite el pastel.
+[AVISO] Sin datos para el grafico de relevancia; se omite.
+[AVISO] Sin datos para el grafico de relevancia; se omite.
+[AVISO] Sin datos para el grafico de relevancia; se omite.
+[AVISO] Sin datos para el grafico de relevancia; se omite.
+[AVISO] Sin datos para el grafico de relevancia; se omite.
+[AVISO] Sin datos para el grafico de relevancia; se omite.
+[AVISO] Sin datos para el grafico de relevancia; se omite.
+[AVISO] Todos los temas puntuan 0: se omite el grafico comparativo.
+
+============================================================
+                 PASO 5/6 - INFORMES LATEX                  
+============================================================
+[OK] .tex generado: C:\Users\aethe\Documentos\mineria de datos\mineria_academica\salida\mineria_de_datos.tex
+[OK] .tex generado: C:\Users\aethe\Documentos\mineria de datos\mineria_academica\salida\kdd.tex
+[OK] .tex generado: C:\Users\aethe\Documentos\mineria de datos\mineria_academica\salida\crisp_dm.tex
+[OK] .tex generado: C:\Users\aethe\Documentos\mineria de datos\mineria_academica\salida\modelo.tex
+[OK] .tex generado: C:\Users\aethe\Documentos\mineria de datos\mineria_academica\salida\modelo_hibrido.tex
+[OK] .tex generado: C:\Users\aethe\Documentos\mineria de datos\mineria_academica\salida\prediccion.tex
+[OK] .tex generado: C:\Users\aethe\Documentos\mineria de datos\mineria_academica\salida\data_warehouse.tex
+
+============================================================
+                PASO 6/6 - COMPILACION A PDF                
+============================================================
+[INFO] Compilacion omitida (--sin-pdf). Solo .tex y .png.
+
+==============================================================================
+                                   RESUMEN                                    
+==============================================================================
+Documentos analizados : 0
+Informes .tex         : 7
+PDF generados         : 0
+Duracion              : 0.1 s
+
+Documentos por tema (clasificacion automatica):
+  (sin documentos)
+
+Mejor documento por tema:
+
+
+Todos los artefactos estan en: C:\Users\aethe\Documentos\mineria de datos\mineria_academica\salida
+PS C:\Users\aethe\Documentos\mineria de datos\mineria_academica> & "c:/Users/aethe/Documentos/mineria de datos/mineria_academica/.venv/Scripts/python.exe" main.py --todo --sin-pdf
+
+==============================================================================
+                    MINERIA ACADEMICA - PIPELINE COMPLETO                     
+==============================================================================
+Carpeta de documentos : C:\Users\aethe\Documentos\mineria de datos\mineria_academica\documentos
+Carpeta de salida     : C:\Users\aethe\Documentos\mineria de datos\mineria_academica\salida
+Umbral de relevancia  : 80% (minimo 5 resultados)
+Plantilla LaTeX       : C:\Users\aethe\Documentos\mineria de datos\mineria_academica\plantillas\documento.tex.j2
+Motor LaTeX           : NO INSTALADO (se generara solo el .tex)
+
+============================================================
+              PASO 1/6 - INGESTA DE DOCUMENTOS              
+============================================================
+[OK] CRISP-DM/A data mining & knowledge discovery process model.pdf: 49,578 caracteres
+[OK] CRISP-DM/A Systematic Literature Review on applying crisp-dm process model.pdf: 69,358 caracteres
+[OK] CRISP-DM/CRISP-DM Towards a standard process model for data mining.pdf: 28,093 caracteres
+[OK] CRISP-DM/CRISP-DM twenty years later From data mining processes to data science trajectories.pdf: 80,923 caracteres
+[OK] CRISP-DM/DMME Data mining methodology for engineering applications–a holistic extension to the CRISP-DM model.pdf: 30,533 caracteres
+[OK] CRISP-DM/The evolution of CRISP-DM for data science Methods, processes and frameworks.pdf: 69,531 caracteres
+[OK] Data Warehouse y OLAP/A survey of real-time data warehouse and ETL.pdf: 26,126 caracteres
+[OK] Data Warehouse y OLAP/Data modeling techniques for data warehouse.pdf: 13,170 caracteres
+[OK] Data Warehouse y OLAP/Data warehouse designing Dimensional modelling and er modelling.pdf: 18,317 caracteres
+[OK] Data Warehouse y OLAP/Data warehousing and olap technology.pdf: 23,258 caracteres
+[OK] Data Warehouse y OLAP/Dimensional modeling and ER modeling in the data warehouse.pdf: 21,273 caracteres
+[OK] Data Warehouse y OLAP/Effectiveness of data vault compared to dimensional data marts on overall performance of a data warehouse system.pdf: 51,320 caracteres
+[OK] Data Warehouse y OLAP/From enterprise models to dimensional models a methodology for data warehouse and data mart design..pdf: 49,950 caracteres
+[OK] Data Warehouse y OLAP/The data warehouse toolkit the complete guide to dimensional modeling.pdf: 1,039,247 caracteres
+[OK] KDD/1011-Article Text-1008-1-10-20080129.pdf: 62,019 caracteres
+[OK] KDD/1230-Article Text-1227-1-10-20080129.pdf: 79,561 caracteres
+[OK] KDD/A survey of data mining and knowledge discovery.pdf: 89,892 caracteres
+[OK] KDD/Intelligent query answering by knowledge discovery techniques.pdf: 177,451 caracteres
+[OK] KDD/INTRODUCTION TO KNOWLEDGE DISCOVERY.pdf: 35,400 caracteres
+[OK] KDD/Knowledge Discovery in Databases An Attribute Oriented Approach.pdf: 104,684 caracteres
+[OK] KDD/Knowledge Discovery in Large Spatial Databases.pdf: 39,459 caracteres
+[OK] KDD/Medical Data Mining Knowledge Discovery in a Clinical Data Warehouse.pdf: 17,373 caracteres
+[OK] KDD/Mining databases Towards algorithms for knowledge discovery.pdf: 169,144 caracteres
+[OK] KDD/Systems for Knowledge Discovery in Databases.pdf: 42 caracteres
+[OK] KDD/The KDD Process.pdf: 34,403 caracteres
+[OK] KDD/Trends in data mining and knowledge discovery.pdf: 66,906 caracteres
+[OK] Mineria de Datos/Agricultural-Health-and-Safety--Evaluating-Farmers--Knowle_2024_Safety-and-H.pdf: 35,579 caracteres
+[OK] Mineria de Datos/Applications-and-Impact-of-Industry-4-0--Technological-In_2024_Safety-and-He.pdf: 15,869 caracteres
+[OK] Mineria de Datos/Associations-Between-Labor-Control-Through-Digital-Platforms_2024_Safety-and.pdf: 41,270 caracteres
+[OK] Mineria de Datos/Asthma-Among-Manitoba-Workers--Results-from-the-Manitoba_2024_Safety-and-Hea.pdf: 38,180 caracteres
+[OK] Mineria de Datos/Cengiz Kayd_m Master of Science Thesis rev2.pdf: 105,849 caracteres
+[OK] Mineria de Datos/Comparison-of-Working-Conditions-Between-Immigrant-and-Non-im_2024_Safety-an.pdf: 25,556 caracteres
+[OK] Mineria de Datos/Data-Mining-Implementations-for-Determining-Root-Causes-and_2024_Safety-and-.pdf: 41,342 caracteres
+[OK] Mineria de Datos/Determination-of-Medical-Faculty-Clinical-Students--Attit_2024_Safety-and-He.pdf: 42,516 caracteres
+[AVISO] 'Effective Diagnosis of Lung Cancer via Various Data-Mining Techniques.pdf' no contiene texto extraible (¿es un PDF escaneado? necesita OCR).
+[OK] Mineria de Datos/Examination-of-Stress-Among-Recruit-and-Incumbent-Wo_2024_Safety-and-Health-.pdf: 37,675 caracteres
+[OK] Mineria de Datos/Health-Outcomes-Related-to-Multiple-Exposures-in-Occup_2024_Safety-and-Healt.pdf: 74,980 caracteres
+[OK] Mineria de Datos/IJERT_Getting_to_know_Data_Mining.pdf: 19,646 caracteres
+[OK] Mineria de Datos/IMPLEMENTATION OF DATA MINING IN COAL PRODUCTION.pdf: 64,264 caracteres
+[OK] Mineria de Datos/Metabolic-Syndrome-and-Cardiovascular-Risk-Factors-in-a_2024_Safety-and-Heal.pdf: 41,997 caracteres
+[OK] Mineria de Datos/Multi-level-Hierarchical-Structure-Analysis-of-Influencing_2024_Safety-and-H.pdf: 40,191 caracteres
+[OK] Mineria de Datos/Occupational-Heat-Exposure-related-Symptoms-Prevalence-and-As_2024_Safety-an.pdf: 44,264 caracteres
+[OK] Mineria de Datos/Organisational-Changes-and-Psychosocial-Work-Factors--Prosp_2024_Safety-and-.pdf: 23,690 caracteres
+[OK] Mineria de Datos/Participatory-Training-Activities-in-South-Asia-for-Promoting_2024_Safety-an.pdf: 33,029 caracteres
+[OK] Mineria de Datos/Psychological-Well-being-Interactively-Affected-by-Long-_2024_Safety-and-Hea.pdf: 33,488 caracteres
+[OK] Mineria de Datos/Role-of-Mindfulness-in-the-Effects-of-Organizational-Cult_2024_Safety-and-He.pdf: 53,507 caracteres
+[OK] Mineria de Datos/Trends-in-Exposure-to-Respirable-Dust-and-Respirable-Cryst_2024_Safety-and-H.pdf: 61,021 caracteres
+[OK] Modelos de Mineria de Datos/A comparative predictive analysis of neural networks (NNs), nonlinear regression and classification and regression tree (CART) models.pdf: 42,753 caracteres
+[OK] Modelos de Mineria de Datos/A hybrid data mining model to predict coronary artery disease cases using non-invasive clinical data.pdf: 28,905 caracteres
+[OK] Modelos de Mineria de Datos/Comparison of three data mining models for predicting diabetes or prediabetes by risk factors.pdf: 34,388 caracteres
+[OK] Modelos de Mineria de Datos/Hybrid decision tree and naïve Bayes classifiers for multi-class classification tasks.pdf: 53,527 caracteres
+[OK] Modelos de Mineria de Datos/Landslide susceptibility assessment in vietnam using support vector machines, decision tree, and Naive Bayes Models.pdf: 87,869 caracteres
+[OK] Modelos de Mineria de Datos/Predictive data mining models for novel coronavirus (COVID-19) infected patients' recovery.pdf: 24,909 caracteres
+[OK] Modelos Hibridos y Ensembles/A boosting ensemble learning based hybrid light gradient boosting machine and extreme gradient boosting model for predicting house prices.pdf: 49,180 caracteres
+[OK] Modelos Hibridos y Ensembles/A hybrid data mining model of feature selection algorithms and ensemble learning classifiers for credit scoring.pdf: 61,219 caracteres
+[OK] Modelos Hibridos y Ensembles/A hybrid ensemble learning-based prediction model to minimise delay in air cargo transport using bagging and stacking.pdf: 68,143 caracteres
+[OK] Modelos Hibridos y Ensembles/BoostTree and BoostForest for ensemble learning.pdf: 107,381 caracteres
+[OK] Modelos Hibridos y Ensembles/Evolutionary bagging for ensemble learning.pdf: 66,368 caracteres
+[OK] Modelos Hibridos y Ensembles/Hybrid stacked ensemble combined with genetic algorithms for diabetes prediction.pdf: 65,210 caracteres
+[OK] Modelos Hibridos y Ensembles/Machine learning hybrid model for the prediction of chronic kidney disease.pdf: 48,002 caracteres
+[OK] Prediccion y Analitica Predictiva/An artificial neural network (p, d, q) model for timeseries forecasting.pdf: 54,920 caracteres
+[OK] Prediccion y Analitica Predictiva/Effective heart disease prediction using hybrid machine learning techniques.pdf: 42,393 caracteres
+[OK] Prediccion y Analitica Predictiva/Fundamentals of machine learning for predictive data analytics.pdf: 64,275 caracteres
+[OK] Prediccion y Analitica Predictiva/Machine learning strategies for time series forecasting.pdf: 77,013 caracteres
+[OK] Prediccion y Analitica Predictiva/Spectral temporal graph neural network for multivariate time-series forecasting.pdf: 39,680 caracteres
+[OK] Prediccion y Analitica Predictiva/Statistical and Machine Learning forecasting methods Concerns and ways forward.pdf: 78,936 caracteres
+[OK] Prediccion y Analitica Predictiva/Time series forecasting using a hybrid ARIMA and neural network model.pdf: 40,413 caracteres
+[INFO] 66 documento(s) cargados recursivamente desde 'C:\Users\aethe\Documentos\mineria de datos\mineria_academica\documentos'.
+
+============================================================
+          PASO 2/6 - RELEVANCIA (TF-IDF + coseno)           
+============================================================
+
+--- Tema: Mineria de Datos [mineria_de_datos]
+[AVISO] Ningun documento alcanza el 80% de relevancia acumulada. Se muestran los 5 mas cercanos (mejor: KDD/1230-Article Text-1227-1-10-20080129.pdf con 3.5%).
+[INFO] 5 de 66 documentos (corte no alcanzado).
+       1.   3.46%  KDD/1230-Article Text-1227-1-10-20080129.pdf
+       2.   3.44%  Mineria de Datos/IJERT_Getting_to_know_Data_Mining.pdf
+       3.   3.07%  KDD/A survey of data mining and knowledge discovery.pdf
+       4.   2.91%  KDD/The KDD Process.pdf
+       5.   2.87%  KDD/INTRODUCTION TO KNOWLEDGE DISCOVERY.pdf
+
+--- Tema: KDD (Knowledge Discovery in Databases) [kdd]
+[INFO] 19 de 66 documentos (corte alcanzado).
+       1.   6.35%  KDD/INTRODUCTION TO KNOWLEDGE DISCOVERY.pdf
+       2.   5.73%  KDD/Medical Data Mining Knowledge Discovery in a Clinical Data Warehouse.pdf
+       3.   5.41%  KDD/Trends in data mining and knowledge discovery.pdf
+       4.   5.37%  KDD/1230-Article Text-1227-1-10-20080129.pdf
+       5.   5.31%  KDD/The KDD Process.pdf
+       6.   5.29%  KDD/Knowledge Discovery in Databases An Attribute Oriented Approach.pdf
+       7.   5.04%  KDD/Intelligent query answering by knowledge discovery techniques.pdf
+       8.   4.69%  CRISP-DM/A data mining & knowledge discovery process model.pdf
+       9.   4.69%  KDD/1011-Article Text-1008-1-10-20080129.pdf
+      10.   4.59%  KDD/Knowledge Discovery in Large Spatial Databases.pdf
+      11.   4.48%  KDD/A survey of data mining and knowledge discovery.pdf
+      12.   3.57%  CRISP-DM/CRISP-DM twenty years later From data mining processes to data science trajectories.pdf
+      13.   3.40%  Mineria de Datos/Cengiz Kayd_m Master of Science Thesis rev2.pdf
+      14.   3.39%  Data Warehouse y OLAP/Data warehouse designing Dimensional modelling and er modelling.pdf
+      15.   2.77%  Mineria de Datos/IJERT_Getting_to_know_Data_Mining.pdf
+      16.   2.74%  Data Warehouse y OLAP/Data warehousing and olap technology.pdf
+      17.   2.44%  CRISP-DM/DMME Data mining methodology for engineering applications–a holistic extension to the CRISP-DM model.pdf
+      18.   2.39%  KDD/Mining databases Towards algorithms for knowledge discovery.pdf
+      19.   2.35%  Data Warehouse y OLAP/Data modeling techniques for data warehouse.pdf
+
+--- Tema: CRISP-DM (Metodologia de Mineria de Datos) [crisp_dm]
+[INFO] 12 de 66 documentos (corte alcanzado).
+       1.  10.99%  CRISP-DM/CRISP-DM Towards a standard process model for data mining.pdf
+       2.  10.53%  CRISP-DM/A data mining & knowledge discovery process model.pdf
+       3.   8.64%  CRISP-DM/DMME Data mining methodology for engineering applications–a holistic extension to the CRISP-DM model.pdf
+       4.   8.52%  KDD/A survey of data mining and knowledge discovery.pdf
+       5.   8.13%  CRISP-DM/A Systematic Literature Review on applying crisp-dm process model.pdf
+       6.   8.05%  CRISP-DM/CRISP-DM twenty years later From data mining processes to data science trajectories.pdf
+       7.   7.41%  CRISP-DM/The evolution of CRISP-DM for data science Methods, processes and frameworks.pdf
+       8.   7.02%  KDD/Trends in data mining and knowledge discovery.pdf
+       9.   6.15%  Mineria de Datos/IMPLEMENTATION OF DATA MINING IN COAL PRODUCTION.pdf
+      10.   2.07%  KDD/INTRODUCTION TO KNOWLEDGE DISCOVERY.pdf
+      11.   1.82%  Data Warehouse y OLAP/Data warehouse designing Dimensional modelling and er modelling.pdf
+      12.   1.73%  KDD/1230-Article Text-1227-1-10-20080129.pdf
+
+--- Tema: Modelos de Mineria de Datos [modelo]
+[INFO] 34 de 66 documentos (corte alcanzado).
+       1.   5.90%  Modelos de Mineria de Datos/Predictive data mining models for novel coronavirus (COVID-19) infected patients' recovery.pdf
+       2.   5.14%  Modelos Hibridos y Ensembles/A hybrid data mining model of feature selection algorithms and ensemble learning classifiers for credit scoring.pdf
+       3.   4.91%  Modelos de Mineria de Datos/A hybrid data mining model to predict coronary artery disease cases using non-invasive clinical data.pdf
+       4.   3.78%  Prediccion y Analitica Predictiva/Effective heart disease prediction using hybrid machine learning techniques.pdf
+       5.   3.66%  Modelos Hibridos y Ensembles/Machine learning hybrid model for the prediction of chronic kidney disease.pdf
+       6.   3.54%  Modelos de Mineria de Datos/A comparative predictive analysis of neural networks (NNs), nonlinear regression and classification and regression tree (CART) models.pdf
+       7.   3.00%  Modelos de Mineria de Datos/Comparison of three data mining models for predicting diabetes or prediabetes by risk factors.pdf
+       8.   2.97%  Modelos Hibridos y Ensembles/BoostTree and BoostForest for ensemble learning.pdf
+       9.   2.64%  Modelos de Mineria de Datos/Hybrid decision tree and naïve Bayes classifiers for multi-class classification tasks.pdf
+      10.   2.59%  Modelos Hibridos y Ensembles/Hybrid stacked ensemble combined with genetic algorithms for diabetes prediction.pdf
+      11.   2.57%  KDD/The KDD Process.pdf
+      12.   2.53%  Modelos Hibridos y Ensembles/A boosting ensemble learning based hybrid light gradient boosting machine and extreme gradient boosting model for predicting house prices.pdf
+      13.   2.50%  KDD/INTRODUCTION TO KNOWLEDGE DISCOVERY.pdf
+      14.   2.16%  Prediccion y Analitica Predictiva/Time series forecasting using a hybrid ARIMA and neural network model.pdf
+      15.   2.14%  Modelos de Mineria de Datos/Landslide susceptibility assessment in vietnam using support vector machines, decision tree, and Naive Bayes Models.pdf
+      16.   2.13%  Mineria de Datos/IJERT_Getting_to_know_Data_Mining.pdf
+      17.   2.07%  KDD/Mining databases Towards algorithms for knowledge discovery.pdf
+      18.   2.02%  Mineria de Datos/Cengiz Kayd_m Master of Science Thesis rev2.pdf
+      19.   1.95%  KDD/Trends in data mining and knowledge discovery.pdf
+      20.   1.87%  Prediccion y Analitica Predictiva/An artificial neural network (p, d, q) model for timeseries forecasting.pdf
+      21.   1.85%  KDD/1230-Article Text-1227-1-10-20080129.pdf
+      22.   1.77%  Mineria de Datos/Data-Mining-Implementations-for-Determining-Root-Causes-and_2024_Safety-and-.pdf
+      23.   1.68%  Prediccion y Analitica Predictiva/Machine learning strategies for time series forecasting.pdf
+      24.   1.65%  Mineria de Datos/IMPLEMENTATION OF DATA MINING IN COAL PRODUCTION.pdf
+      25.   1.61%  KDD/A survey of data mining and knowledge discovery.pdf
+      26.   1.57%  KDD/Knowledge Discovery in Large Spatial Databases.pdf
+      27.   1.53%  Data Warehouse y OLAP/Data warehouse designing Dimensional modelling and er modelling.pdf
+      28.   1.47%  KDD/Intelligent query answering by knowledge discovery techniques.pdf
+      29.   1.36%  CRISP-DM/CRISP-DM Towards a standard process model for data mining.pdf
+      30.   1.34%  CRISP-DM/DMME Data mining methodology for engineering applications–a holistic extension to the CRISP-DM model.pdf
+      31.   1.30%  Modelos Hibridos y Ensembles/A hybrid ensemble learning-based prediction model to minimise delay in air cargo transport using bagging and stacking.pdf
+      32.   1.19%  KDD/Knowledge Discovery in Databases An Attribute Oriented Approach.pdf
+      33.   1.18%  Modelos Hibridos y Ensembles/Evolutionary bagging for ensemble learning.pdf
+      34.   1.16%  CRISP-DM/CRISP-DM twenty years later From data mining processes to data science trajectories.pdf
+
+--- Tema: Modelos Hibridos y Ensembles [modelo_hibrido]
+[INFO] 45 de 66 documentos (corte alcanzado).
+       1.   6.02%  Modelos Hibridos y Ensembles/A hybrid data mining model of feature selection algorithms and ensemble learning classifiers for credit scoring.pdf
+       2.   5.74%  Modelos Hibridos y Ensembles/A boosting ensemble learning based hybrid light gradient boosting machine and extreme gradient boosting model for predicting house prices.pdf
+       3.   5.49%  Modelos Hibridos y Ensembles/Hybrid stacked ensemble combined with genetic algorithms for diabetes prediction.pdf
+       4.   4.82%  Modelos Hibridos y Ensembles/Machine learning hybrid model for the prediction of chronic kidney disease.pdf
+       5.   4.42%  Modelos Hibridos y Ensembles/BoostTree and BoostForest for ensemble learning.pdf
+       6.   3.99%  Prediccion y Analitica Predictiva/Effective heart disease prediction using hybrid machine learning techniques.pdf
+       7.   3.54%  Prediccion y Analitica Predictiva/An artificial neural network (p, d, q) model for timeseries forecasting.pdf
+       8.   3.24%  Modelos Hibridos y Ensembles/Evolutionary bagging for ensemble learning.pdf
+       9.   3.18%  Modelos de Mineria de Datos/A hybrid data mining model to predict coronary artery disease cases using non-invasive clinical data.pdf
+      10.   3.11%  Modelos Hibridos y Ensembles/A hybrid ensemble learning-based prediction model to minimise delay in air cargo transport using bagging and stacking.pdf
+      11.   2.96%  Prediccion y Analitica Predictiva/Time series forecasting using a hybrid ARIMA and neural network model.pdf
+      12.   2.70%  Modelos de Mineria de Datos/Hybrid decision tree and naïve Bayes classifiers for multi-class classification tasks.pdf
+      13.   2.69%  Modelos de Mineria de Datos/Predictive data mining models for novel coronavirus (COVID-19) infected patients' recovery.pdf
+      14.   2.64%  Modelos de Mineria de Datos/A comparative predictive analysis of neural networks (NNs), nonlinear regression and classification and regression tree (CART) models.pdf
+      15.   1.89%  Mineria de Datos/Cengiz Kayd_m Master of Science Thesis rev2.pdf
+      16.   1.58%  KDD/INTRODUCTION TO KNOWLEDGE DISCOVERY.pdf
+      17.   1.47%  Mineria de Datos/IJERT_Getting_to_know_Data_Mining.pdf
+      18.   1.12%  KDD/1230-Article Text-1227-1-10-20080129.pdf
+      19.   1.05%  KDD/Trends in data mining and knowledge discovery.pdf
+      20.   1.05%  Prediccion y Analitica Predictiva/Machine learning strategies for time series forecasting.pdf
+      21.   1.01%  KDD/The KDD Process.pdf
+      22.   0.98%  Mineria de Datos/IMPLEMENTATION OF DATA MINING IN COAL PRODUCTION.pdf
+      23.   0.93%  CRISP-DM/CRISP-DM Towards a standard process model for data mining.pdf
+      24.   0.92%  CRISP-DM/DMME Data mining methodology for engineering applications–a holistic extension to the CRISP-DM model.pdf
+      25.   0.91%  KDD/A survey of data mining and knowledge discovery.pdf
+      26.   0.88%  KDD/Mining databases Towards algorithms for knowledge discovery.pdf
+      27.   0.88%  Data Warehouse y OLAP/Data warehouse designing Dimensional modelling and er modelling.pdf
+      28.   0.87%  CRISP-DM/CRISP-DM twenty years later From data mining processes to data science trajectories.pdf
+      29.   0.81%  KDD/Medical Data Mining Knowledge Discovery in a Clinical Data Warehouse.pdf
+      30.   0.78%  Modelos de Mineria de Datos/Comparison of three data mining models for predicting diabetes or prediabetes by risk factors.pdf
+      31.   0.77%  Mineria de Datos/Data-Mining-Implementations-for-Determining-Root-Causes-and_2024_Safety-and-.pdf
+      32.   0.76%  Mineria de Datos/Trends-in-Exposure-to-Respirable-Dust-and-Respirable-Cryst_2024_Safety-and-H.pdf
+      33.   0.73%  CRISP-DM/A data mining & knowledge discovery process model.pdf
+      34.   0.68%  Prediccion y Analitica Predictiva/Spectral temporal graph neural network for multivariate time-series forecasting.pdf
+      35.   0.66%  CRISP-DM/A Systematic Literature Review on applying crisp-dm process model.pdf
+      36.   0.63%  KDD/1011-Article Text-1008-1-10-20080129.pdf
+      37.   0.61%  Modelos de Mineria de Datos/Landslide susceptibility assessment in vietnam using support vector machines, decision tree, and Naive Bayes Models.pdf
+      38.   0.52%  KDD/Knowledge Discovery in Databases An Attribute Oriented Approach.pdf
+      39.   0.51%  KDD/Intelligent query answering by knowledge discovery techniques.pdf
+      40.   0.46%  Data Warehouse y OLAP/A survey of real-time data warehouse and ETL.pdf
+      41.   0.45%  Data Warehouse y OLAP/The data warehouse toolkit the complete guide to dimensional modeling.pdf
+      42.   0.43%  Data Warehouse y OLAP/Data warehousing and olap technology.pdf
+      43.   0.41%  CRISP-DM/The evolution of CRISP-DM for data science Methods, processes and frameworks.pdf
+      44.   0.40%  KDD/Knowledge Discovery in Large Spatial Databases.pdf
+      45.   0.39%  Prediccion y Analitica Predictiva/Fundamentals of machine learning for predictive data analytics.pdf
+
+--- Tema: Prediccion y Analitica Predictiva [prediccion]
+[INFO] 31 de 66 documentos (corte alcanzado).
+       1.   4.58%  Prediccion y Analitica Predictiva/Time series forecasting using a hybrid ARIMA and neural network model.pdf
+       2.   4.54%  Prediccion y Analitica Predictiva/An artificial neural network (p, d, q) model for timeseries forecasting.pdf
+       3.   4.44%  Prediccion y Analitica Predictiva/Effective heart disease prediction using hybrid machine learning techniques.pdf
+       4.   4.33%  Prediccion y Analitica Predictiva/Machine learning strategies for time series forecasting.pdf
+       5.   3.91%  Mineria de Datos/IJERT_Getting_to_know_Data_Mining.pdf
+       6.   3.22%  Prediccion y Analitica Predictiva/Spectral temporal graph neural network for multivariate time-series forecasting.pdf
+       7.   3.15%  Modelos Hibridos y Ensembles/Machine learning hybrid model for the prediction of chronic kidney disease.pdf
+       8.   3.06%  Modelos de Mineria de Datos/A comparative predictive analysis of neural networks (NNs), nonlinear regression and classification and regression tree (CART) models.pdf
+       9.   2.99%  CRISP-DM/DMME Data mining methodology for engineering applications–a holistic extension to the CRISP-DM model.pdf
+      10.   2.91%  Modelos Hibridos y Ensembles/Hybrid stacked ensemble combined with genetic algorithms for diabetes prediction.pdf
+      11.   2.54%  Modelos Hibridos y Ensembles/A hybrid ensemble learning-based prediction model to minimise delay in air cargo transport using bagging and stacking.pdf
+      12.   2.53%  CRISP-DM/CRISP-DM twenty years later From data mining processes to data science trajectories.pdf
+      13.   2.52%  Modelos de Mineria de Datos/Predictive data mining models for novel coronavirus (COVID-19) infected patients' recovery.pdf
+      14.   2.50%  Modelos Hibridos y Ensembles/A hybrid data mining model of feature selection algorithms and ensemble learning classifiers for credit scoring.pdf
+      15.   2.49%  Modelos Hibridos y Ensembles/A boosting ensemble learning based hybrid light gradient boosting machine and extreme gradient boosting model for predicting house prices.pdf
+      16.   2.41%  KDD/Trends in data mining and knowledge discovery.pdf
+      17.   2.32%  Prediccion y Analitica Predictiva/Fundamentals of machine learning for predictive data analytics.pdf
+      18.   2.27%  Modelos de Mineria de Datos/A hybrid data mining model to predict coronary artery disease cases using non-invasive clinical data.pdf
+      19.   2.27%  KDD/INTRODUCTION TO KNOWLEDGE DISCOVERY.pdf
+      20.   2.23%  Modelos de Mineria de Datos/Comparison of three data mining models for predicting diabetes or prediabetes by risk factors.pdf
+      21.   2.16%  Mineria de Datos/IMPLEMENTATION OF DATA MINING IN COAL PRODUCTION.pdf
+      22.   2.16%  KDD/The KDD Process.pdf
+      23.   2.15%  KDD/1230-Article Text-1227-1-10-20080129.pdf
+      24.   1.97%  Data Warehouse y OLAP/A survey of real-time data warehouse and ETL.pdf
+      25.   1.89%  Modelos Hibridos y Ensembles/BoostTree and BoostForest for ensemble learning.pdf
+      26.   1.86%  Modelos Hibridos y Ensembles/Evolutionary bagging for ensemble learning.pdf
+      27.   1.77%  Modelos de Mineria de Datos/Hybrid decision tree and naïve Bayes classifiers for multi-class classification tasks.pdf
+      28.   1.59%  KDD/1011-Article Text-1008-1-10-20080129.pdf
+      29.   1.25%  Mineria de Datos/Data-Mining-Implementations-for-Determining-Root-Causes-and_2024_Safety-and-.pdf
+      30.   1.16%  KDD/A survey of data mining and knowledge discovery.pdf
+      31.   1.09%  KDD/Mining databases Towards algorithms for knowledge discovery.pdf
+
+--- Tema: Data Warehouse y OLAP [data_warehouse]
+[INFO] 11 de 66 documentos (corte alcanzado).
+       1.  13.57%  Data Warehouse y OLAP/Data warehouse designing Dimensional modelling and er modelling.pdf
+       2.  10.88%  Data Warehouse y OLAP/Dimensional modeling and ER modeling in the data warehouse.pdf
+       3.   9.60%  Data Warehouse y OLAP/From enterprise models to dimensional models a methodology for data warehouse and data mart design..pdf
+       4.   8.98%  Data Warehouse y OLAP/Data modeling techniques for data warehouse.pdf
+       5.   8.69%  Data Warehouse y OLAP/A survey of real-time data warehouse and ETL.pdf
+       6.   8.01%  Data Warehouse y OLAP/Effectiveness of data vault compared to dimensional data marts on overall performance of a data warehouse system.pdf
+       7.   7.70%  Data Warehouse y OLAP/Data warehousing and olap technology.pdf
+       8.   6.25%  Data Warehouse y OLAP/The data warehouse toolkit the complete guide to dimensional modeling.pdf
+       9.   2.67%  KDD/Medical Data Mining Knowledge Discovery in a Clinical Data Warehouse.pdf
+      10.   2.36%  Mineria de Datos/Cengiz Kayd_m Master of Science Thesis rev2.pdf
+      11.   1.63%  KDD/The KDD Process.pdf
+
+============================================================
+             PASO 3/6 - CLASIFICACION POR TEMA              
+============================================================
+[INFO] 66 documento(s) clasificado(s).
+        6  KDD (Knowledge Discovery in Databases)  (kdd)
+        9  CRISP-DM (Metodologia de Mineria de Datos)  (crisp_dm)
+        1  Modelos de Mineria de Datos  (modelo)
+        2  Modelos Hibridos y Ensembles  (modelo_hibrido)
+        8  Data Warehouse y OLAP  (data_warehouse)
+       40  sin_clasificar  (sin_clasificar)
+
+============================================================
+                    PASO 4/6 - GRAFICOS                     
+============================================================
+[OK] Grafico de distribucion: C:\Users\aethe\Documentos\mineria de datos\mineria_academica\salida\distribucion_temas.png
+[OK] Grafico de relevancia: C:\Users\aethe\Documentos\mineria de datos\mineria_academica\salida\grafico_mineria_de_datos.png
+[OK] Grafico de relevancia: C:\Users\aethe\Documentos\mineria de datos\mineria_academica\salida\grafico_kdd.png
+[OK] Grafico de relevancia: C:\Users\aethe\Documentos\mineria de datos\mineria_academica\salida\grafico_crisp_dm.png
+[OK] Grafico de relevancia: C:\Users\aethe\Documentos\mineria de datos\mineria_academica\salida\grafico_modelo.png
+[OK] Grafico de relevancia: C:\Users\aethe\Documentos\mineria de datos\mineria_academica\salida\grafico_modelo_hibrido.png
+[OK] Grafico de relevancia: C:\Users\aethe\Documentos\mineria de datos\mineria_academica\salida\grafico_prediccion.png
+[OK] Grafico de relevancia: C:\Users\aethe\Documentos\mineria de datos\mineria_academica\salida\grafico_data_warehouse.png
+[OK] Grafico comparativo: C:\Users\aethe\Documentos\mineria de datos\mineria_academica\salida\comparativa_temas.png
+
+============================================================
+                 PASO 5/6 - INFORMES LATEX                  
+============================================================
+[OK] .tex generado: C:\Users\aethe\Documentos\mineria de datos\mineria_academica\salida\mineria_de_datos.tex
+[OK] .tex generado: C:\Users\aethe\Documentos\mineria de datos\mineria_academica\salida\kdd.tex
+[OK] .tex generado: C:\Users\aethe\Documentos\mineria de datos\mineria_academica\salida\crisp_dm.tex
+[OK] .tex generado: C:\Users\aethe\Documentos\mineria de datos\mineria_academica\salida\modelo.tex
+[OK] .tex generado: C:\Users\aethe\Documentos\mineria de datos\mineria_academica\salida\modelo_hibrido.tex
+[OK] .tex generado: C:\Users\aethe\Documentos\mineria de datos\mineria_academica\salida\prediccion.tex
+[OK] .tex generado: C:\Users\aethe\Documentos\mineria de datos\mineria_academica\salida\data_warehouse.tex
+
+============================================================
+                PASO 6/6 - COMPILACION A PDF                
+============================================================
+[INFO] Compilacion omitida (--sin-pdf). Solo .tex y .png.
+
+==============================================================================
+                                   RESUMEN                                    
+==============================================================================
+Documentos analizados : 66
+Informes .tex         : 7
+PDF generados         : 0
+Duracion              : 189.4 s
+
+Documentos por tema (clasificacion automatica):
+    6  KDD (Knowledge Discovery in Databases)        ######
+    9  CRISP-DM (Metodologia de Mineria de Datos)    #########
+    1  Modelos de Mineria de Datos                   #
+    2  Modelos Hibridos y Ensembles                  ##
+    8  Data Warehouse y OLAP                         ########
+   40  sin_clasificar                                ##############################
+
+Mejor documento por tema:
+  Mineria de Datos                                3.46%  KDD/1230-Article Text-1227-1-10-20080129.pdf
+  KDD (Knowledge Discovery in Databases)          6.35%  KDD/INTRODUCTION TO KNOWLEDGE DISCOVERY.pdf
+  CRISP-DM (Metodologia de Mineria de Datos)     10.99%  CRISP-DM/CRISP-DM Towards a standard process model for data mining.pdf
+  Modelos de Mineria de Datos                     5.90%  Modelos de Mineria de Datos/Predictive data mining models for novel coronavirus (COVID-19) infected patients' recovery.pdf
+  Modelos Hibridos y Ensembles                    6.02%  Modelos Hibridos y Ensembles/A hybrid data mining model of feature selection algorithms and ensemble learning classifiers for credit scoring.pdf
+  Prediccion y Analitica Predictiva               4.58%  Prediccion y Analitica Predictiva/Time series forecasting using a hybrid ARIMA and neural network model.pdf
+  Data Warehouse y OLAP                          13.57%  Data Warehouse y OLAP/Data warehouse designing Dimensional modelling and er modelling.pdf
+
+Grafico de distribucion : C:\Users\aethe\Documentos\mineria de datos\mineria_academica\salida\distribucion_temas.png
+Grafico comparativo     : C:\Users\aethe\Documentos\mineria de datos\mineria_academica\salida\comparativa_temas.png
+
+Todos los artefactos estan en: C:\Users\aethe\Documentos\mineria de datos\mineria_academica\salida
+PS C:\Users\aethe\Documentos\mineria de datos\mineria_academica> 
