@@ -21,15 +21,23 @@ import main
 import queries
 
 BASE_DIR = Path(__file__).resolve().parent
-ARTIFACTS_DIR = BASE_DIR / "artifacts"
-DOCUMENTS_DIR = BASE_DIR / "documentos"
+DATA_DIR = Path(os.environ.get("APP_DATA_DIR", BASE_DIR)).expanduser()
+ARTIFACTS_DIR = DATA_DIR / "artifacts"
+DOCUMENTS_DIR = DATA_DIR / "documentos"
+DEFAULT_DOCUMENTS_DIR = BASE_DIR / "documentos"
 UPLOAD_LIMIT = 100 * 1024 * 1024
 ALLOWED_EXTENSIONS = {".pdf", ".txt"}
+LOCAL_ORIGINS = ["http://localhost:5173", "http://127.0.0.1:5173"]
+FRONTEND_ORIGINS = [
+    origin.strip().rstrip("/")
+    for origin in os.environ.get("FRONTEND_ORIGINS", "").split(",")
+    if origin.strip()
+] or LOCAL_ORIGINS
 
 app = FastAPI(title="Minería Académica", version="1.0.0")
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173", "http://127.0.0.1:5173"],
+    allow_origins=FRONTEND_ORIGINS,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -54,8 +62,12 @@ class AnalysisResult(BaseModel):
     resumen: str
 
 
-ARTIFACTS_DIR.mkdir(exist_ok=True)
-DOCUMENTS_DIR.mkdir(exist_ok=True)
+ARTIFACTS_DIR.mkdir(parents=True, exist_ok=True)
+if not DOCUMENTS_DIR.exists():
+    if DEFAULT_DOCUMENTS_DIR.is_dir() and DOCUMENTS_DIR.resolve() != DEFAULT_DOCUMENTS_DIR.resolve():
+        shutil.copytree(DEFAULT_DOCUMENTS_DIR, DOCUMENTS_DIR)
+    else:
+        DOCUMENTS_DIR.mkdir(parents=True, exist_ok=True)
 app.mount("/api/documentos", StaticFiles(directory=str(DOCUMENTS_DIR)), name="documentos")
 
 

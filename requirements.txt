@@ -22,6 +22,11 @@ matplotlib>=3.8.0
 # Motor de plantillas para los informes .tex
 jinja2>=3.1.0
 
+# --- Servidor web (API para la interfaz React) -----------------------
+fastapi>=0.115.0
+uvicorn[standard]>=0.34.0
+python-multipart>=0.0.20
+
 
 # --- Opcionales -------------------------------------------------------
 # No son necesarias para ejecutar el pipeline: los comandos try/except de
