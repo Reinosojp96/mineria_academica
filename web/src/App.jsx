@@ -6,7 +6,7 @@ const MAX_IMPORT_BATCH_BYTES = 25 * 1024 * 1024
 const MAX_UPLOAD_BYTES = 100 * 1024 * 1024
 const API_CONFIGURATION_ERROR = 'Falta configurar VITE_API_URL en Netlify con la URL pública de Render y volver a desplegar.'
 
-function apiFetch(path, options) {
+async function apiFetch(path, options) {
   if (!API_URL) throw new Error(API_CONFIGURATION_ERROR)
   return fetch(`${API_URL}${path}`, options)
 }
@@ -66,6 +66,10 @@ function App() {
   }
 
   useEffect(() => {
+    if (!API_URL) {
+      setError(API_CONFIGURATION_ERROR)
+      return
+    }
     loadTopics()
     loadDocumentLibrary()
     loadSessions()
@@ -527,7 +531,7 @@ function App() {
         </div>
       </section>
 
-      {error && <div className="notice error">{error}</div>}
+      {error && <div className="notice error" role="alert">{error}</div>}
 
       {result && (
         <section className="panel results-panel" ref={resultsRef}>
