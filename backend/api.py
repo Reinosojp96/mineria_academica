@@ -7,7 +7,7 @@ import re
 import shutil
 import tempfile
 import uuid
-from pathlib import Path
+from pathlib import Path, PurePosixPath
 from typing import Annotated
 from urllib.parse import quote, unquote
 
@@ -68,7 +68,7 @@ if not DOCUMENTS_DIR.exists():
         shutil.copytree(DEFAULT_DOCUMENTS_DIR, DOCUMENTS_DIR)
     else:
         DOCUMENTS_DIR.mkdir(parents=True, exist_ok=True)
-app.mount("/api/documentos", StaticFiles(directory=str(DOCUMENTS_DIR)), name="documentos")
+app.mount("/api/archivos", StaticFiles(directory=str(DOCUMENTS_DIR)), name="archivos")
 
 
 def _safe_filename(filename: str) -> str:
@@ -192,6 +192,59 @@ def documentos() -> dict[str, list[str]]:
             for path in sorted(DOCUMENTS_DIR.iterdir())
             if path.is_file() and path.suffix.lower() in ALLOWED_EXTENSIONS
         ]
+    }
+
+
+@app.post("/api/documentos/importar")
+async def importar_documentos(
+    files: Annotated[list[UploadFile], File(description="Carpeta con subcarpetas por tema")],
+    rutas: Annotated[str, Form()],
+) -> dict[str, object]:
+    try:
+        relative_paths = json.loads(rutas)
+    except json.JSONDecodeError as exc:
+        raise HTTPException(status_code=400, detail="La estructura de carpetas no es válida.") from exc
+
+    if not isinstance(relative_paths, list) or len(relative_paths) != len(files):
+        raise HTTPException(status_code=400, detail="No coinciden los archivos con sus rutas.")
+
+    imported_themes: set[str] = set()
+    imported_count = 0
+    for upload, raw_path in zip(files, relative_paths):
+        if not isinstance(raw_path, str):
+            raise HTTPException(status_code=400, detail="Ruta de archivo no válida.")
+
+        normalized_path = PurePosixPath(raw_path.replace("\\", "/"))
+        parts = normalized_path.parts
+        if normalized_path.is_absolute() or any(part in {".", ".."} for part in parts) or len(parts) < 3:
+            raise HTTPException(
+                status_code=400,
+                detail="Cada archivo debe estar dentro de una subcarpeta de tema.",
+            )
+        if upload.filename is None or Path(parts[-1]).suffix.lower() not in ALLOWED_EXTENSIONS:
+            raise HTTPException(status_code=400, detail="Solo se aceptan archivos PDF y TXT.")
+        if upload.size and upload.size > UPLOAD_LIMIT:
+            raise HTTPException(status_code=413, detail=f"Archivo demasiado grande: {upload.filename}")
+
+        relative_parts = parts[1:]
+        theme_name = _safe_folder_name(relative_parts[0])
+        target_dir = DOCUMENTS_DIR / theme_name
+        for directory in relative_parts[1:-1]:
+            target_dir /= _safe_folder_name(directory)
+        target_dir.mkdir(parents=True, exist_ok=True)
+
+        filename = _safe_filename(relative_parts[-1])
+        target = target_dir / filename
+        if target.exists():
+            target = target_dir / f"{Path(filename).stem}_{uuid.uuid4().hex[:8]}{Path(filename).suffix}"
+        target.write_bytes(await upload.read())
+        imported_themes.add(theme_name)
+        imported_count += 1
+
+    return {
+        "status": "imported",
+        "documentos": imported_count,
+        "temas": sorted(imported_themes),
     }
 
 

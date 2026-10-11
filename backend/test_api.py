@@ -1,6 +1,8 @@
 import json
+import shutil
 import tempfile
 import unittest
+import uuid
 from pathlib import Path
 from urllib.parse import quote
 
@@ -96,6 +98,30 @@ class ApiTestCase(unittest.TestCase):
         file_response = self.client.get("/api/documentos/lista.txt")
         self.assertEqual(file_response.status_code, 200)
         self.assertEqual(file_response.content, b"documento de prueba")
+
+    def test_document_library_route_and_nested_folder_import(self) -> None:
+        documents_dir = ARTIFACTS_DIR.parent / "documentos"
+        response = self.client.get("/api/documentos")
+        self.assertEqual(response.status_code, 200, response.text)
+        self.assertIn("documentos", response.json())
+
+        theme_name = f"Importacion de prueba {uuid.uuid4().hex[:8]}"
+        relative_path = f"documentos/{theme_name}/subcarpeta/articulo.txt"
+        response = self.client.post(
+            "/api/documentos/importar",
+            files=[("files", ("articulo.txt", b"contenido de prueba", "text/plain"))],
+            data={"rutas": json.dumps([relative_path])},
+        )
+        self.assertEqual(response.status_code, 200, response.text)
+        self.assertEqual(response.json()["documentos"], 1)
+        self.assertIn(theme_name, response.json()["temas"])
+        self.assertTrue((documents_dir / theme_name / "subcarpeta" / "articulo.txt").is_file())
+
+        listing = self.client.get(f"/api/temas/{quote(theme_name)}/documentos")
+        self.assertEqual(listing.status_code, 200, listing.text)
+        self.assertEqual(listing.json()["documentos"], ["subcarpeta/articulo.txt"])
+
+        shutil.rmtree(documents_dir / theme_name)
 
     def test_theme_folders_are_listed_and_created(self) -> None:
         theme_name = "Nuevo Tema de Prueba"

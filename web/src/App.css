@@ -113,10 +113,15 @@
 .theme-creator { display: flex; gap: 10px; margin: 18px 0; }
 .theme-creator input { flex: 1; }
 .document-library h3 { margin: 0 0 12px; }
+.document-library-heading { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 8px; }
+.document-library-heading h3 { margin: 0; }
+.library-hint { margin: 0 0 12px; color: #475569; font-size: 0.9rem; }
+.import-message { margin: 0 0 12px; color: #145847; font-weight: 700; }
 .document-library ul { margin: 0; padding-left: 20px; color: #334155; }
 .document-library li + li { margin-top: 6px; }
 
 input[type='file'] { display: none; }
+.folder-input { display: none; }
 
 .drop-zone {
   min-height: 180px;
@@ -281,6 +286,7 @@ input[type='range'] { width: 100%; }
   .session-item { align-items: stretch; flex-direction: column; }
   .session-actions { flex-wrap: wrap; }
   .session-actions button { flex: 1; }
+  .document-library-heading { align-items: flex-start; flex-direction: column; }
   .artifact-grid { grid-template-columns: 1fr; }
   .artifact-card img { height: 230px; }
 }

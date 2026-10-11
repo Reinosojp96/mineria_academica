@@ -26,7 +26,10 @@ function App() {
   const [documentLibrary, setDocumentLibrary] = useState([])
   const [topicDocuments, setTopicDocuments] = useState([])
   const [isLoadingTopic, setIsLoadingTopic] = useState(false)
+  const [isImportingFolder, setIsImportingFolder] = useState(false)
+  const [importMessage, setImportMessage] = useState('')
   const fileInputRef = useRef(null)
+  const folderInputRef = useRef(null)
   const resultsRef = useRef(null)
 
   const loadSessions = () => {
@@ -97,6 +100,58 @@ function App() {
 
     setDocuments(selected)
     setError('')
+  }
+
+  const importFolder = async (fileList) => {
+    const files = Array.from(fileList)
+    const supportedFiles = files.filter((file) =>
+      file.name.toLowerCase().endsWith('.pdf') || file.name.toLowerCase().endsWith('.txt'),
+    )
+    const withRelativePaths = supportedFiles.filter((file) => file.webkitRelativePath)
+
+    if (!withRelativePaths.length) {
+      setError('Selecciona la carpeta documentos desde el botón de importación.')
+      return
+    }
+    if (withRelativePaths.length !== supportedFiles.length) {
+      setError('El navegador no conservó la estructura de carpetas. Prueba con Chrome o Edge.')
+      return
+    }
+
+    const formData = new FormData()
+    supportedFiles.forEach((file) => formData.append('files', file))
+    formData.append('rutas', JSON.stringify(supportedFiles.map((file) => file.webkitRelativePath)))
+    setIsImportingFolder(true)
+    setImportMessage('')
+    setError('')
+
+    try {
+      const response = await fetch(`${API_URL}/api/documentos/importar`, {
+        method: 'POST',
+        body: formData,
+      })
+      const payload = await response.json()
+      if (!response.ok) {
+        throw new Error(payload.detail || 'No se pudo importar la carpeta.')
+      }
+
+      loadTopics()
+      loadDocumentLibrary()
+      const firstTheme = payload.temas?.[0]
+      if (firstTheme) {
+        setSelectedTopic(firstTheme)
+        const topicResponse = await fetch(`${API_URL}/api/temas/${encodeURIComponent(firstTheme)}/documentos`)
+        if (topicResponse.ok) {
+          const topicPayload = await topicResponse.json()
+          setTopicDocuments(topicPayload.documentos ?? [])
+        }
+      }
+      setImportMessage(`Se importaron ${payload.documentos} documentos en ${payload.temas.length} temas.`)
+    } catch (requestError) {
+      setError(requestError.message)
+    } finally {
+      setIsImportingFolder(false)
+    }
   }
 
   const runAnalysis = async () => {
@@ -260,7 +315,31 @@ function App() {
         </form>
 
         <div className="document-library">
-          <h3>Documentos guardados</h3>
+          <div className="document-library-heading">
+            <h3>Documentos guardados</h3>
+            <button
+              className="secondary-button small-button"
+              type="button"
+              disabled={isImportingFolder}
+              onClick={() => folderInputRef.current?.click()}
+            >
+              {isImportingFolder ? 'Importando…' : 'Importar carpeta documentos'}
+            </button>
+          </div>
+          <input
+            ref={folderInputRef}
+            className="folder-input"
+            type="file"
+            webkitdirectory=""
+            directory=""
+            multiple
+            onChange={(event) => {
+              importFolder(event.target.files)
+              event.target.value = ''
+            }}
+          />
+          <p className="library-hint">Elige una carpeta local con subcarpetas por tema. Solo se importan PDF y TXT; los archivos existentes se conservan.</p>
+          {importMessage && <p className="import-message" role="status">{importMessage}</p>}
           {documentLibrary.length ? (
             <ul>
               {documentLibrary.map((document) => <li key={document}>{document}</li>)}
