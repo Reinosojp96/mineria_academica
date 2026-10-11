@@ -168,9 +168,11 @@ def pipeline_completo(
     # --- 5. Informes .tex ---------------------------------------------
     _titulo_consola("PASO 5/6 - INFORMES LATEX", 60)
     rutas_tex: list[str] = []
+    ejemplos_por_tema: dict[str, dict[str, str]] = {}
     for tema in queries.listar_temas():
         ranking = ranking_por_tema.get(tema) or []
-        ejemplo, _ejemplo_nombre = _mejor_ejemplo(docs, tema)
+        ejemplo, ejemplo_nombre = _mejor_ejemplo(docs, tema)
+        ejemplos_por_tema[tema] = {"texto": ejemplo, "documento": ejemplo_nombre}
         rutas_tex.append(
             latex_gen.generar_tex(
                 tema=tema,
@@ -214,6 +216,7 @@ def pipeline_completo(
         "documentos": len(docs),
         "docs": docs,
         "temas": ranking_por_tema,
+        "ejemplos": ejemplos_por_tema,
         "clasificacion": asignacion,
         "confianza": confianza,
         "conteo": conteo,
@@ -266,8 +269,11 @@ def procesar_tema(
     print(f"[OK] Informe listo: {ruta_pdf or ruta_tex}")
     return {
         "tema": tema,
+        "consulta": query,
         "documentos": len(docs),
         "relevancia": ranking,
+        "ejemplo": ejemplo,
+        "ejemplo_nombre": _nombre,
         "png": ruta_png,
         "tex": ruta_tex,
         "pdf": ruta_pdf,

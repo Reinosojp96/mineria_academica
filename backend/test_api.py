@@ -53,6 +53,13 @@ class ApiTestCase(unittest.TestCase):
             self.assertIn("graficos", payload)
             self.assertTrue(payload["graficos"])
             self.assertEqual(payload["session_id"], Path(payload["session_id"]).name)
+            self.assertEqual(len(payload["informes"]), 7)
+            kdd_report = next(report for report in payload["informes"] if report["tema"] == "kdd")
+            self.assertIn("knowledge discovery", kdd_report["consulta"].lower())
+            self.assertTrue(kdd_report["documentos"])
+            self.assertTrue(kdd_report["ejemplo"])
+            self.assertTrue(kdd_report["grafico"].endswith("grafico_kdd.png"))
+            self.assertTrue(kdd_report["tex_url"].endswith("kdd.tex"))
             chart_response = self.client.get(payload["graficos"][0])
             self.assertEqual(chart_response.status_code, 200)
             self.assertTrue(payload["tex"])
@@ -172,6 +179,7 @@ class ApiTestCase(unittest.TestCase):
                 "pdf": [],
                 "csv": [],
                 "resumen": "Sesión de prueba",
+                "informes": [{"tema": "kdd", "titulo": "KDD", "documentos": []}],
             }),
             encoding="utf-8",
         )
@@ -183,6 +191,7 @@ class ApiTestCase(unittest.TestCase):
         restore_response = self.client.get(f"/api/sessions/{session_id}")
         self.assertEqual(restore_response.status_code, 200)
         self.assertEqual(restore_response.json()["resumen"], "Sesión de prueba")
+        self.assertEqual(restore_response.json()["informes"][0]["titulo"], "KDD")
         self.assertEqual(restore_response.json()["session_id"], session_id)
         self.assertEqual(restore_response.json()["graficos"], [f"/api/artifacts/{session_id}/grafico.png"])
         chart_response = self.client.get(restore_response.json()["graficos"][0])

@@ -28,6 +28,7 @@ function App() {
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState('')
   const [result, setResult] = useState(null)
+  const [selectedReportIndex, setSelectedReportIndex] = useState(0)
   const [sessions, setSessions] = useState([])
   const [busySessionId, setBusySessionId] = useState('')
   const [themeName, setThemeName] = useState('')
@@ -40,6 +41,7 @@ function App() {
   const fileInputRef = useRef(null)
   const folderInputRef = useRef(null)
   const resultsRef = useRef(null)
+  const selectedReport = result?.informes?.[selectedReportIndex]
 
   const loadSessions = () => {
     apiFetch('/api/sessions')
@@ -241,6 +243,7 @@ function App() {
         throw new Error(payload.detail || 'La solicitud no pudo procesarse.')
       }
       setResult(payload)
+      setSelectedReportIndex(0)
       loadSessions()
     } catch (requestError) {
       setError(requestError.message)
@@ -258,6 +261,7 @@ function App() {
         throw new Error(payload.detail || 'No se pudo restaurar la sesión.')
       }
       setResult(payload)
+      setSelectedReportIndex(0)
       setDocuments([])
       setError('')
       requestAnimationFrame(() => resultsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }))
@@ -544,6 +548,123 @@ function App() {
           </div>
 
           <p className="summary-text">{result.resumen}</p>
+
+          {result.informes?.length > 0 && (
+            <div className="report-view">
+              <div className="report-toolbar">
+                <label>
+                  Informe
+                  <select
+                    value={selectedReportIndex}
+                    onChange={(event) => setSelectedReportIndex(Number(event.target.value))}
+                  >
+                    {result.informes.map((report, index) => (
+                      <option key={report.tema} value={index}>{report.titulo}</option>
+                    ))}
+                  </select>
+                </label>
+                <div className="report-actions">
+                  {selectedReport?.tex_url && (
+                    <a className="secondary-button" href={`${API_URL}${selectedReport.tex_url}`} target="_blank" rel="noreferrer">
+                      Descargar TEX
+                    </a>
+                  )}
+                  {selectedReport?.pdf_url ? (
+                    <a className="primary-button report-pdf-link" href={`${API_URL}${selectedReport.pdf_url}`} download>
+                      Descargar PDF
+                    </a>
+                  ) : (
+                    <button className="primary-button report-pdf-link" onClick={() => window.print()}>
+                      Guardar como PDF
+                    </button>
+                  )}
+                </div>
+              </div>
+
+              {selectedReport && (
+                <article className="report-document">
+                  <header className="report-cover">
+                    <p className="section-label">Informe generado automáticamente</p>
+                    <h1>{selectedReport.titulo}</h1>
+                    <p>Análisis documental con TF-IDF y similitud del coseno</p>
+                    <div className="report-facts">
+                      <span><strong>Tema</strong>{selectedReport.tema}</span>
+                      <span><strong>Documentos analizados</strong>{selectedReport.total_documentos}</span>
+                      <span><strong>Documentos relevantes</strong>{selectedReport.documentos.length}</span>
+                      <span><strong>Umbral acumulado</strong>{Math.round(threshold * 100)}%</span>
+                      <span><strong>Fecha</strong>{new Date().toLocaleDateString('es-ES')}</span>
+                    </div>
+                  </header>
+
+                  <section className="report-section">
+                    <h2>1. Introducción y metodología</h2>
+                    <p>Se analizaron los documentos de la carpeta del tema mediante ingesta de PDF y TXT, puntuación TF-IDF con similitud del coseno y selección acumulada por relevancia.</p>
+                    <h3>Consulta booleana utilizada</h3>
+                    <pre className="report-query">{selectedReport.consulta}</pre>
+                    <p>La puntuación expresa la similitud del coseno como porcentaje. Los resultados se ordenan de mayor a menor relevancia; el orden es más significativo que el valor absoluto.</p>
+                    <p>La selección es acumulativa: se priorizan documentos hasta alcanzar un umbral de {Math.round(threshold * 100)}%. Si el corpus no alcanza ese acumulado, se conservan al menos {minimum} resultados cuando están disponibles.</p>
+                  </section>
+
+                  <section className="report-section">
+                    <h2>2. Documentos relevantes</h2>
+                    <p>Se identificaron {selectedReport.documentos.length} documentos relevantes de {selectedReport.total_documentos} analizados.</p>
+                    {selectedReport.documentos.length ? (
+                      <div className="report-table-wrap">
+                        <table className="report-table">
+                          <thead><tr><th>#</th><th>Documento</th><th>Relevancia</th></tr></thead>
+                          <tbody>
+                            {selectedReport.documentos.map((document, index) => (
+                              <tr key={`${document.nombre}-${index}`}>
+                                <td>{index + 1}</td>
+                                <td>{document.nombre}</td>
+                                <td>{document.relevancia.toFixed(2)}%</td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    ) : <p>No se identificaron documentos por encima del criterio configurado.</p>}
+                  </section>
+
+                  <section className="report-section report-chart-section">
+                    <h2>3. Gráfico de relevancia</h2>
+                    {selectedReport.grafico && (
+                      <img className="report-chart" src={`${API_URL}${selectedReport.grafico}`} alt={`Relevancia para ${selectedReport.titulo}`} />
+                    )}
+                    <p>El gráfico compara la relevancia de cada documento frente a la consulta del tema.</p>
+                  </section>
+
+                  <section className="report-section">
+                    <h2>4. Ejemplo de evidencia</h2>
+                    {selectedReport.ejemplo ? (
+                      <>
+                        <p>Fragmento recuperado de <strong>{selectedReport.ejemplo_nombre}</strong>:</p>
+                        <blockquote>{selectedReport.ejemplo}</blockquote>
+                      </>
+                    ) : <p>No hay texto disponible del que extraer un ejemplo.</p>}
+                  </section>
+
+                  <section className="report-section">
+                    <h2>5. Conclusiones</h2>
+                    <ul>
+                      <li>La consulta del tema recuperó {selectedReport.documentos.length} documentos relevantes de {selectedReport.total_documentos} analizados.</li>
+                      <li>TF-IDF y similitud del coseno priorizan los textos que comparten más términos con la consulta.</li>
+                      <li>El ranking y el gráfico permiten orientar la lectura hacia las fuentes más relacionadas.</li>
+                    </ul>
+                  </section>
+
+                  <section className="report-section">
+                    <h2>Siguientes pasos sugeridos</h2>
+                    <ul>
+                      <li>Ampliar la carpeta del tema con nuevas fuentes académicas.</li>
+                      <li>Ajustar el umbral de relevancia y el mínimo de resultados según el tamaño del corpus.</li>
+                      <li>Revisar los documentos mejor posicionados y ejecutar de nuevo el análisis cuando se actualice la biblioteca.</li>
+                    </ul>
+                  </section>
+                </article>
+              )}
+            </div>
+          )}
 
           <div className="artifact-grid">
             {result.graficos.map((url) => (

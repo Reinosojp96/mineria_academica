@@ -15,7 +15,7 @@ from fastapi import FastAPI, File, Form, HTTPException, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 import main
 import queries
@@ -60,6 +60,7 @@ class AnalysisResult(BaseModel):
     pdf: list[str]
     csv: list[str]
     resumen: str
+    informes: list[dict[str, object]] = Field(default_factory=list)
 
 
 ARTIFACTS_DIR.mkdir(parents=True, exist_ok=True)
@@ -450,15 +451,60 @@ async def analyze(
             "pdf": _list_output_files(output_dir, {".pdf"}),
             "csv": _list_output_files(output_dir, {".csv"}),
         }
+        reports: list[dict[str, object]] = []
+        if "result" in result:
+            report_result = result["result"]
+            report_theme = str(result["tema"])
+            reports.append({
+                "tema": report_theme,
+                "titulo": queries.titulo_tema(report_theme),
+                "consulta": report_result["consulta"],
+                "documentos": [
+                    {"nombre": str(name), "relevancia": float(score)}
+                    for name, score in report_result["relevancia"]
+                ],
+                "total_documentos": int(report_result["documentos"]),
+                "ejemplo": str(report_result["ejemplo"]),
+                "ejemplo_nombre": str(report_result["ejemplo_nombre"]),
+            })
+        else:
+            source_docs = result.get("docs", {})
+            examples = result.get("ejemplos", {})
+            for report_theme, ranking in result.get("temas", {}).items():
+                example_info = examples.get(report_theme, {})
+                reports.append({
+                    "tema": str(report_theme),
+                    "titulo": queries.titulo_tema(str(report_theme)),
+                    "consulta": queries.generar_busqueda(str(report_theme)),
+                    "documentos": [
+                        {"nombre": str(name), "relevancia": float(score)}
+                        for name, score in ranking
+                    ],
+                    "total_documentos": int(result["documentos"]),
+                    "ejemplo": str(example_info.get("texto", "")),
+                    "ejemplo_nombre": str(example_info.get("documento", "")),
+                })
+
+        tex_urls = [_artifact_url(session_key, Path(path).name) for path in output_files["tex"]]
+        pdf_urls = [_artifact_url(session_key, Path(path).name) for path in output_files["pdf"]]
+        tex_by_theme = {Path(path).stem: url for path, url in zip(output_files["tex"], tex_urls)}
+        pdf_by_theme = {Path(path).stem: url for path, url in zip(output_files["pdf"], pdf_urls)}
+        for report in reports:
+            report_theme = str(report["tema"])
+            report["grafico"] = _artifact_url(session_key, f"grafico_{report_theme}.png")
+            report["tex_url"] = tex_by_theme.get(report_theme)
+            report["pdf_url"] = pdf_by_theme.get(report_theme)
+
         summary = {
             "session_id": session_key,
             "documentos": documentos,
             "temas": temas,
             "graficos": [_artifact_url(session_key, Path(path).name) for path in output_files["png"]],
-            "tex": [_artifact_url(session_key, Path(path).name) for path in output_files["tex"]],
-            "pdf": [_artifact_url(session_key, Path(path).name) for path in output_files["pdf"]],
+            "tex": tex_urls,
+            "pdf": pdf_urls,
             "csv": [_artifact_url(session_key, Path(path).name) for path in output_files["csv"]],
             "resumen": resumen,
+            "informes": reports,
         }
         (output_dir / "summary.json").write_text(json.dumps(summary), encoding="utf-8")
 
