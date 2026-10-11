@@ -2,6 +2,8 @@ import { useEffect, useRef, useState } from 'react'
 import './App.css'
 
 const API_URL = (import.meta.env.VITE_API_URL || (import.meta.env.DEV ? 'http://localhost:8000' : '')).replace(/\/$/, '')
+const MAX_IMPORT_BATCH_BYTES = 25 * 1024 * 1024
+const MAX_UPLOAD_BYTES = 100 * 1024 * 1024
 
 function artifactTitle(url) {
   return decodeURIComponent(url.split('/').pop())
@@ -27,6 +29,7 @@ function App() {
   const [topicDocuments, setTopicDocuments] = useState([])
   const [isLoadingTopic, setIsLoadingTopic] = useState(false)
   const [isImportingFolder, setIsImportingFolder] = useState(false)
+  const [importProgress, setImportProgress] = useState('')
   const [importMessage, setImportMessage] = useState('')
   const fileInputRef = useRef(null)
   const folderInputRef = useRef(null)
@@ -110,7 +113,7 @@ function App() {
     const withRelativePaths = supportedFiles.filter((file) => file.webkitRelativePath)
 
     if (!withRelativePaths.length) {
-      setError('Selecciona la carpeta documentos desde el botón de importación.')
+      setError('No se encontraron PDF o TXT en la carpeta seleccionada.')
       return
     }
     if (withRelativePaths.length !== supportedFiles.length) {
@@ -118,26 +121,68 @@ function App() {
       return
     }
 
-    const formData = new FormData()
-    supportedFiles.forEach((file) => formData.append('files', file))
-    formData.append('rutas', JSON.stringify(supportedFiles.map((file) => file.webkitRelativePath)))
+    const oversizedFile = supportedFiles.find((file) => file.size > MAX_UPLOAD_BYTES)
+    if (oversizedFile) {
+      setError(`${oversizedFile.name} supera el límite de 100 MB por archivo.`)
+      return
+    }
+
+    const batches = []
+    let currentBatch = []
+    let currentBatchBytes = 0
+    for (const file of supportedFiles) {
+      if (currentBatch.length && (
+        currentBatch.length >= 10 || currentBatchBytes + file.size > MAX_IMPORT_BATCH_BYTES
+      )) {
+        batches.push(currentBatch)
+        currentBatch = []
+        currentBatchBytes = 0
+      }
+      currentBatch.push(file)
+      currentBatchBytes += file.size
+    }
+    if (currentBatch.length) batches.push(currentBatch)
+
     setIsImportingFolder(true)
     setImportMessage('')
+    setImportProgress('')
     setError('')
+    let importedCount = 0
+    const importedThemes = new Set()
 
     try {
-      const response = await fetch(`${API_URL}/api/documentos/importar`, {
-        method: 'POST',
-        body: formData,
-      })
-      const payload = await response.json()
-      if (!response.ok) {
-        throw new Error(payload.detail || 'No se pudo importar la carpeta.')
+      for (const [batchIndex, batch] of batches.entries()) {
+        setImportProgress(`Importando lote ${batchIndex + 1} de ${batches.length}…`)
+        const formData = new FormData()
+        batch.forEach((file) => formData.append('files', file))
+        formData.append('rutas', JSON.stringify(batch.map((file) => file.webkitRelativePath)))
+
+        const response = await fetch(`${API_URL}/api/documentos/importar`, {
+          method: 'POST',
+          body: formData,
+        })
+        const responseText = await response.text()
+        let payload = {}
+        try {
+          payload = responseText ? JSON.parse(responseText) : {}
+        } catch {
+          payload = {}
+        }
+        if (!response.ok) {
+          const responseMessage = responseText.trim().startsWith('<')
+            ? ''
+            : responseText.replace(/\s+/g, ' ').trim().slice(0, 240)
+          const detail = payload.detail || responseMessage || `el servidor respondió HTTP ${response.status}`
+          throw new Error(`Falló el lote ${batchIndex + 1} de ${batches.length}: ${detail}`)
+        }
+
+        importedCount += payload.documentos ?? batch.length
+        payload.temas?.forEach((topic) => importedThemes.add(topic))
       }
 
       loadTopics()
       loadDocumentLibrary()
-      const firstTheme = payload.temas?.[0]
+      const firstTheme = [...importedThemes].sort()[0]
       if (firstTheme) {
         setSelectedTopic(firstTheme)
         const topicResponse = await fetch(`${API_URL}/api/temas/${encodeURIComponent(firstTheme)}/documentos`)
@@ -146,11 +191,16 @@ function App() {
           setTopicDocuments(topicPayload.documentos ?? [])
         }
       }
-      setImportMessage(`Se importaron ${payload.documentos} documentos en ${payload.temas.length} temas.`)
+      setImportMessage(`Se importaron ${importedCount} documentos en ${importedThemes.size} temas.`)
     } catch (requestError) {
-      setError(requestError.message)
+      loadTopics()
+      loadDocumentLibrary()
+      setError(importedCount
+        ? `Importación parcial: se guardaron ${importedCount} documentos. ${requestError.message}`
+        : requestError.message)
     } finally {
       setIsImportingFolder(false)
+      setImportProgress('')
     }
   }
 
@@ -323,7 +373,7 @@ function App() {
               disabled={isImportingFolder}
               onClick={() => folderInputRef.current?.click()}
             >
-              {isImportingFolder ? 'Importando…' : 'Importar carpeta documentos'}
+              {isImportingFolder ? importProgress || 'Importando…' : 'Importar carpeta documentos'}
             </button>
           </div>
           <input

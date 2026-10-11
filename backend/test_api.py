@@ -106,22 +106,32 @@ class ApiTestCase(unittest.TestCase):
         self.assertIn("documentos", response.json())
 
         theme_name = f"Importacion de prueba {uuid.uuid4().hex[:8]}"
-        relative_path = f"documentos/{theme_name}/subcarpeta/articulo.txt"
+        direct_theme_name = f"Tema directo {uuid.uuid4().hex[:8]}"
+        relative_paths = [
+            f"documentos/{theme_name}/subcarpeta/articulo.txt",
+            f"{direct_theme_name}/articulo-directo.txt",
+        ]
         response = self.client.post(
             "/api/documentos/importar",
-            files=[("files", ("articulo.txt", b"contenido de prueba", "text/plain"))],
-            data={"rutas": json.dumps([relative_path])},
+            files=[
+                ("files", ("articulo.txt", b"contenido de prueba", "text/plain")),
+                ("files", ("articulo-directo.txt", b"tema seleccionado directamente", "text/plain")),
+            ],
+            data={"rutas": json.dumps(relative_paths)},
         )
         self.assertEqual(response.status_code, 200, response.text)
-        self.assertEqual(response.json()["documentos"], 1)
+        self.assertEqual(response.json()["documentos"], 2)
         self.assertIn(theme_name, response.json()["temas"])
+        self.assertIn(direct_theme_name, response.json()["temas"])
         self.assertTrue((documents_dir / theme_name / "subcarpeta" / "articulo.txt").is_file())
+        self.assertTrue((documents_dir / direct_theme_name / "articulo-directo.txt").is_file())
 
         listing = self.client.get(f"/api/temas/{quote(theme_name)}/documentos")
         self.assertEqual(listing.status_code, 200, listing.text)
         self.assertEqual(listing.json()["documentos"], ["subcarpeta/articulo.txt"])
 
         shutil.rmtree(documents_dir / theme_name)
+        shutil.rmtree(documents_dir / direct_theme_name)
 
     def test_theme_folders_are_listed_and_created(self) -> None:
         theme_name = "Nuevo Tema de Prueba"

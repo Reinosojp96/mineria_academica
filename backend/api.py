@@ -216,17 +216,26 @@ async def importar_documentos(
 
         normalized_path = PurePosixPath(raw_path.replace("\\", "/"))
         parts = normalized_path.parts
-        if normalized_path.is_absolute() or any(part in {".", ".."} for part in parts) or len(parts) < 3:
+        if normalized_path.is_absolute() or any(part in {".", ".."} for part in parts) or len(parts) < 2:
             raise HTTPException(
                 status_code=400,
-                detail="Cada archivo debe estar dentro de una subcarpeta de tema.",
+                detail="Cada archivo debe estar dentro de una carpeta de tema.",
             )
         if upload.filename is None or Path(parts[-1]).suffix.lower() not in ALLOWED_EXTENSIONS:
             raise HTTPException(status_code=400, detail="Solo se aceptan archivos PDF y TXT.")
         if upload.size and upload.size > UPLOAD_LIMIT:
             raise HTTPException(status_code=413, detail=f"Archivo demasiado grande: {upload.filename}")
 
-        relative_parts = parts[1:]
+        if parts[0].casefold() in {"documentos", "documents"}:
+            relative_parts = parts[1:]
+        else:
+            relative_parts = parts
+        if len(relative_parts) < 2:
+            raise HTTPException(
+                status_code=400,
+                detail="La carpeta seleccionada debe contener subcarpetas con los temas.",
+            )
+
         theme_name = _safe_folder_name(relative_parts[0])
         target_dir = DOCUMENTS_DIR / theme_name
         for directory in relative_parts[1:-1]:
