@@ -4,6 +4,12 @@ import './App.css'
 const API_URL = (import.meta.env.VITE_API_URL || (import.meta.env.DEV ? 'http://localhost:8000' : '')).replace(/\/$/, '')
 const MAX_IMPORT_BATCH_BYTES = 25 * 1024 * 1024
 const MAX_UPLOAD_BYTES = 100 * 1024 * 1024
+const API_CONFIGURATION_ERROR = 'Falta configurar VITE_API_URL en Netlify con la URL pública de Render y volver a desplegar.'
+
+function apiFetch(path, options) {
+  if (!API_URL) throw new Error(API_CONFIGURATION_ERROR)
+  return fetch(`${API_URL}${path}`, options)
+}
 
 function artifactTitle(url) {
   return decodeURIComponent(url.split('/').pop())
@@ -36,27 +42,27 @@ function App() {
   const resultsRef = useRef(null)
 
   const loadSessions = () => {
-    fetch(`${API_URL}/api/sessions`)
+    apiFetch('/api/sessions')
       .then((response) => response.json())
       .then((data) => setSessions(data.sessions ?? []))
-      .catch(() => setError('No fue posible cargar las sesiones guardadas.'))
+      .catch((requestError) => setError(API_URL ? 'No fue posible cargar las sesiones guardadas.' : requestError.message))
   }
 
   const loadTopics = () => {
-    fetch(`${API_URL}/api/temas`)
+    apiFetch('/api/temas')
       .then((response) => response.json())
       .then((data) => {
         setTopics(data.temas)
         setSelectedTopic((current) => current || data.temas[0] || '')
       })
-      .catch(() => setError('No fue posible conectar con el servicio local.'))
+      .catch((requestError) => setError(API_URL ? 'No fue posible conectar con el servicio API.' : requestError.message))
   }
 
   const loadDocumentLibrary = () => {
-    fetch(`${API_URL}/api/documentos`)
+    apiFetch('/api/documentos')
       .then((response) => response.json())
       .then((data) => setDocumentLibrary(data.documentos ?? []))
-      .catch(() => setError('No fue posible cargar la biblioteca de documentos.'))
+      .catch((requestError) => setError(API_URL ? 'No fue posible cargar la biblioteca de documentos.' : requestError.message))
   }
 
   useEffect(() => {
@@ -73,7 +79,7 @@ function App() {
 
     let active = true
     setIsLoadingTopic(true)
-    fetch(`${API_URL}/api/temas/${encodeURIComponent(selectedTopic)}/documentos`)
+    apiFetch(`/api/temas/${encodeURIComponent(selectedTopic)}/documentos`)
       .then((response) => {
         if (!response.ok) throw new Error('No se pudieron leer los documentos de este tema.')
         return response.json()
@@ -157,7 +163,7 @@ function App() {
         batch.forEach((file) => formData.append('files', file))
         formData.append('rutas', JSON.stringify(batch.map((file) => file.webkitRelativePath)))
 
-        const response = await fetch(`${API_URL}/api/documentos/importar`, {
+        const response = await apiFetch('/api/documentos/importar', {
           method: 'POST',
           body: formData,
         })
@@ -185,7 +191,7 @@ function App() {
       const firstTheme = [...importedThemes].sort()[0]
       if (firstTheme) {
         setSelectedTopic(firstTheme)
-        const topicResponse = await fetch(`${API_URL}/api/temas/${encodeURIComponent(firstTheme)}/documentos`)
+        const topicResponse = await apiFetch(`/api/temas/${encodeURIComponent(firstTheme)}/documentos`)
         if (topicResponse.ok) {
           const topicPayload = await topicResponse.json()
           setTopicDocuments(topicPayload.documentos ?? [])
@@ -222,7 +228,7 @@ function App() {
     if (selectedTopic) formData.append('tema', selectedTopic)
 
     try {
-      const response = await fetch(`${API_URL}/api/analyze`, {
+      const response = await apiFetch('/api/analyze', {
         method: 'POST',
         body: formData,
       })
@@ -242,7 +248,7 @@ function App() {
   const restoreSession = async (sessionId) => {
     setBusySessionId(sessionId)
     try {
-      const response = await fetch(`${API_URL}/api/sessions/${sessionId}`)
+      const response = await apiFetch(`/api/sessions/${sessionId}`)
       const payload = await response.json()
       if (!response.ok) {
         throw new Error(payload.detail || 'No se pudo restaurar la sesión.')
@@ -261,7 +267,7 @@ function App() {
   const deleteSession = async (sessionId) => {
     setBusySessionId(sessionId)
     try {
-      const response = await fetch(`${API_URL}/api/sessions/${sessionId}`, { method: 'DELETE' })
+      const response = await apiFetch(`/api/sessions/${sessionId}`, { method: 'DELETE' })
       const payload = await response.json()
       if (!response.ok) {
         throw new Error(payload.detail || 'No se pudo eliminar la sesión.')
@@ -286,7 +292,7 @@ function App() {
     }
 
     try {
-      const response = await fetch(`${API_URL}/api/temas`, {
+      const response = await apiFetch('/api/temas', {
         method: 'POST',
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
         body: new URLSearchParams({ nombre: themeName }),
