@@ -35,6 +35,15 @@ function artifactTitle(url) {
     .replace(/[_-]/g, ' ')
 }
 
+function formatSessionDate(value) {
+  const date = new Date(value)
+  if (Number.isNaN(date.getTime())) return ''
+  return new Intl.DateTimeFormat('es-MX', {
+    dateStyle: 'medium',
+    timeStyle: 'short',
+  }).format(date)
+}
+
 function App() {
   const [activeTab, setActiveTab] = useState('ingesta')
   const [darkMode, setDarkMode] = useState(false)
@@ -534,8 +543,14 @@ function App() {
             {sessions.map((session) => (
               <article key={session.session_id} className="session-item">
                 <div>
-                  <strong>{session.resumen || 'Sesión sin resumen'}</strong>
-                  <span>{session.documentos} documentos · {session.temas?.length ?? 0} temas</span>
+                  <strong>{session.titulo || session.resumen || 'Sesión sin resumen'}</strong>
+                  <span>
+                    {session.documentos} documentos · {session.temas?.length ?? 0}{' '}
+                    {session.temas?.length === 1 ? 'tema' : 'temas'}
+                  </span>
+                  {session.created_at && (
+                    <span><time dateTime={session.created_at}>{formatSessionDate(session.created_at)}</time></span>
+                  )}
                 </div>
                 <div className="session-actions">
                   <button className="primary-button small-button" disabled={busySessionId === session.session_id} onClick={() => restoreSession(session.session_id)}>

@@ -8,6 +8,7 @@ import re
 import shutil
 import tempfile
 import uuid
+from datetime import datetime, timezone
 from pathlib import Path, PurePosixPath
 from typing import Annotated
 from urllib.parse import quote, unquote
@@ -55,6 +56,8 @@ class AnalysisRequest(BaseModel):
 
 class AnalysisResult(BaseModel):
     session_id: str
+    titulo: str
+    created_at: str
     documentos: int
     temas: list[str]
     graficos: list[str]
@@ -99,9 +102,35 @@ def _artifact_url(session_id: str, filename: str) -> str:
     return f"/api/artifacts/{quote(session_id)}/{quote(filename)}"
 
 
+def _session_title(summary: dict[str, object]) -> str:
+    title = summary.get("titulo")
+    if isinstance(title, str) and title.strip():
+        return title
+
+    topics = summary.get("temas")
+    topic_names = [str(topic) for topic in topics] if isinstance(topics, list) else []
+    if len(topic_names) == 1:
+        try:
+            return queries.titulo_tema(topic_names[0])
+        except KeyError:
+            return topic_names[0].replace("_", " ").capitalize()
+
+    summary_text = summary.get("resumen")
+    if isinstance(summary_text, str) and summary_text.startswith("Carpeta "):
+        folder_name = summary_text[len("Carpeta "):].split(":", 1)[0]
+        return f"Análisis de carpeta: {folder_name}"
+    if topic_names:
+        return f"Análisis general · {len(topic_names)} temas"
+    return "Análisis sin tema"
+
+
 def _session_summary(session_dir: Path, summary: dict[str, object]) -> dict[str, object]:
     normalized = dict(summary)
     normalized["session_id"] = session_dir.name
+    normalized["titulo"] = _session_title(normalized)
+    if not isinstance(normalized.get("created_at"), str):
+        modified_at = (session_dir / "salida" / "summary.json").stat().st_mtime
+        normalized["created_at"] = datetime.fromtimestamp(modified_at, timezone.utc).isoformat()
     for artifact_type in ("graficos", "tex", "pdf", "csv"):
         artifacts = normalized.get(artifact_type, [])
         if isinstance(artifacts, list):
@@ -333,7 +362,7 @@ def documento(filename: str) -> FileResponse:
 @app.get("/api/sessions")
 def sessions() -> dict[str, list[dict[str, object]]]:
     session_list: list[dict[str, object]] = []
-    for session_dir in sorted(ARTIFACTS_DIR.iterdir(), reverse=True):
+    for session_dir in ARTIFACTS_DIR.iterdir():
         if not session_dir.is_dir():
             continue
         summary_path = session_dir / "salida" / "summary.json"
@@ -348,11 +377,13 @@ def sessions() -> dict[str, list[dict[str, object]]]:
         normalized = _session_summary(session_dir, summary)
         session_list.append({
             "session_id": normalized["session_id"],
+            "titulo": normalized["titulo"],
             "documentos": normalized.get("documentos", 0),
             "temas": normalized.get("temas", []),
             "resumen": normalized.get("resumen", ""),
-            "created_at": session_dir.name,
+            "created_at": normalized["created_at"],
         })
+    session_list.sort(key=lambda item: str(item["created_at"]), reverse=True)
     return {"sessions": session_list}
 
 
@@ -473,6 +504,7 @@ async def analyze(
     session_id = tempfile.mkdtemp(prefix="analysis_", dir=str(ARTIFACTS_DIR))
     session_path = Path(session_id)
     session_key = session_path.name
+    created_at = datetime.now(timezone.utc).isoformat()
     input_dir = session_path / "documentos"
     input_dir.mkdir(parents=True, exist_ok=True)
     output_dir = session_path / "salida"
@@ -543,16 +575,23 @@ async def analyze(
                 documentos = int(payload["documentos"])
                 temas = [str(result["tema"])]
                 resumen = f"Tema procesado: {result['tema']}"
+                titulo = queries.titulo_tema(str(result["tema"]))
             else:
                 payload = result
                 documentos = int(payload["documentos"])
                 temas = [str(item) for item in payload["temas"].keys()]
                 resumen = f"Carpeta {result['tema_carpeta']}: {documentos} documentos analizados en {len(temas)} temas."
+                titulo = f"Análisis de carpeta: {result['tema_carpeta']}"
         else:
             payload = result
             documentos = int(payload["documentos"])
             temas = [str(t) for t in payload["temas"].keys()]
             resumen = f"Analizados {documentos} documentos en {len(temas)} temas."
+            titulo = (
+                queries.titulo_tema(temas[0])
+                if len(temas) == 1
+                else f"Análisis general · {len(temas)} temas"
+            )
 
         output_files = {
             "png": _list_output_files(output_dir, {".png"}),
@@ -606,6 +645,8 @@ async def analyze(
 
         summary = {
             "session_id": session_key,
+            "titulo": titulo,
+            "created_at": created_at,
             "documentos": documentos,
             "temas": temas,
             "graficos": [_artifact_url(session_key, Path(path).name) for path in output_files["png"]],

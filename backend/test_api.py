@@ -8,12 +8,26 @@ from urllib.parse import quote
 
 from fastapi.testclient import TestClient
 
-from backend.api import app, ARTIFACTS_DIR, _resolve_topic_key
+import backend.api as api
+from backend.api import _resolve_topic_key
 
 
 class ApiTestCase(unittest.TestCase):
     def setUp(self) -> None:
-        self.client = TestClient(app)
+        self.original_data_dirs = (api.ARTIFACTS_DIR, api.DOCUMENTS_DIR, api.JOBS_DIR)
+        self.temp_data_dir = tempfile.TemporaryDirectory()
+        temp_root = Path(self.temp_data_dir.name)
+        api.ARTIFACTS_DIR = temp_root / "artifacts"
+        api.DOCUMENTS_DIR = temp_root / "documentos"
+        api.JOBS_DIR = temp_root / "jobs"
+        api.ARTIFACTS_DIR.mkdir()
+        shutil.copytree(api.DEFAULT_DOCUMENTS_DIR, api.DOCUMENTS_DIR)
+        api.JOBS_DIR.mkdir()
+        self.client = TestClient(api.app)
+
+    def tearDown(self) -> None:
+        api.ARTIFACTS_DIR, api.DOCUMENTS_DIR, api.JOBS_DIR = self.original_data_dirs
+        self.temp_data_dir.cleanup()
 
     def test_health(self) -> None:
         response = self.client.get("/api/health")
@@ -64,6 +78,8 @@ class ApiTestCase(unittest.TestCase):
             self.assertEqual(response.status_code, 200, response.text)
             payload = response.json()
             self.assertEqual(payload["documentos"], 1)
+            self.assertEqual(payload["titulo"], "Análisis general · 7 temas")
+            self.assertTrue(payload["created_at"])
             self.assertIn("graficos", payload)
             self.assertTrue(payload["graficos"])
             self.assertEqual(payload["session_id"], Path(payload["session_id"]).name)
@@ -77,10 +93,10 @@ class ApiTestCase(unittest.TestCase):
             chart_response = self.client.get(payload["graficos"][0])
             self.assertEqual(chart_response.status_code, 200)
             self.assertTrue(payload["tex"])
-            self.assertTrue((ARTIFACTS_DIR.parent / "documentos" / sample.name).exists())
+            self.assertTrue((api.DOCUMENTS_DIR / sample.name).exists())
 
     def test_analysis_reads_selected_theme_folder_without_upload(self) -> None:
-        documents_dir = ARTIFACTS_DIR.parent / "documentos"
+        documents_dir = api.DOCUMENTS_DIR
         theme_dir = documents_dir / "Tema de Prueba Directa"
         theme_dir.mkdir(exist_ok=True)
         sample = theme_dir / "paper.txt"
@@ -109,7 +125,7 @@ class ApiTestCase(unittest.TestCase):
             theme_dir.rmdir()
 
     def test_display_name_folder_analyzes_only_its_mapped_topic(self) -> None:
-        theme_dir = ARTIFACTS_DIR.parent / "documentos" / "Modelos de Mineria de Datos"
+        theme_dir = api.DOCUMENTS_DIR / "Modelos de Mineria de Datos"
         theme_dir_existed = theme_dir.exists()
         theme_dir.mkdir(exist_ok=True)
         sample = theme_dir / f"modelo-{uuid.uuid4().hex[:8]}.txt"
@@ -132,6 +148,7 @@ class ApiTestCase(unittest.TestCase):
             payload = response.json()
             self.assertEqual(payload["documentos"], expected_document_count)
             self.assertEqual(payload["temas"], ["modelo"])
+            self.assertEqual(payload["titulo"], "Modelos de Mineria de Datos")
             self.assertEqual([report["tema"] for report in payload["informes"]], ["modelo"])
         finally:
             sample.unlink(missing_ok=True)
@@ -140,7 +157,7 @@ class ApiTestCase(unittest.TestCase):
 
     def test_analysis_job_returns_status_and_result(self) -> None:
         theme_name = f"Job de prueba {uuid.uuid4().hex[:8]}"
-        theme_dir = ARTIFACTS_DIR.parent / "documentos" / theme_name
+        theme_dir = api.DOCUMENTS_DIR / theme_name
         theme_dir.mkdir()
         sample = theme_dir / "paper.txt"
         sample.write_text(
@@ -161,13 +178,14 @@ class ApiTestCase(unittest.TestCase):
             status = status_response.json()
             self.assertEqual(status["status"], "completed")
             self.assertEqual(status["result"]["documentos"], 1)
+            self.assertEqual(status["result"]["titulo"], f"Análisis de carpeta: {theme_name}")
             self.assertEqual(status["result"]["temas"], ["mineria_de_datos", "kdd", "crisp_dm", "modelo", "modelo_hibrido", "prediccion", "data_warehouse"])
         finally:
             sample.unlink(missing_ok=True)
             theme_dir.rmdir()
 
     def test_document_folder_can_be_listed(self) -> None:
-        document_path = ARTIFACTS_DIR.parent / "documentos" / "lista.txt"
+        document_path = api.DOCUMENTS_DIR / "lista.txt"
         document_path.write_text("documento de prueba", encoding="utf-8")
 
         response = self.client.get("/api/documentos")
@@ -179,7 +197,7 @@ class ApiTestCase(unittest.TestCase):
         self.assertEqual(file_response.content, b"documento de prueba")
 
     def test_document_library_route_and_nested_folder_import(self) -> None:
-        documents_dir = ARTIFACTS_DIR.parent / "documentos"
+        documents_dir = api.DOCUMENTS_DIR
         response = self.client.get("/api/documentos")
         self.assertEqual(response.status_code, 200, response.text)
         self.assertIn("documentos", response.json())
@@ -225,7 +243,7 @@ class ApiTestCase(unittest.TestCase):
 
     def test_theme_folders_are_listed_and_created(self) -> None:
         theme_name = "Nuevo Tema de Prueba"
-        theme_path = ARTIFACTS_DIR.parent / "documentos" / theme_name
+        theme_path = api.DOCUMENTS_DIR / theme_name
         if theme_path.exists():
             theme_path.rmdir()
 
@@ -247,7 +265,7 @@ class ApiTestCase(unittest.TestCase):
 
     def test_sessions_can_be_listed_restored_and_deleted(self) -> None:
         session_id = "test-session"
-        session_dir = ARTIFACTS_DIR / session_id
+        session_dir = api.ARTIFACTS_DIR / session_id
         session_dir.mkdir(parents=True, exist_ok=True)
         output_dir = session_dir / "salida"
         output_dir.mkdir(exist_ok=True)
@@ -262,18 +280,45 @@ class ApiTestCase(unittest.TestCase):
                 "pdf": [],
                 "csv": [],
                 "resumen": "Sesión de prueba",
+                "titulo": "Sesión de prueba",
+                "created_at": "2026-01-01T00:00:00+00:00",
                 "informes": [{"tema": "kdd", "titulo": "KDD", "documentos": []}],
+            }),
+            encoding="utf-8",
+        )
+
+        older_session_dir = api.ARTIFACTS_DIR / "older-session"
+        older_output_dir = older_session_dir / "salida"
+        older_output_dir.mkdir(parents=True)
+        (older_output_dir / "summary.json").write_text(
+            json.dumps({
+                "session_id": "older-session",
+                "documentos": 1,
+                "temas": ["modelo"],
+                "created_at": "2025-01-01T00:00:00+00:00",
+                "graficos": [],
+                "tex": [],
+                "pdf": [],
+                "csv": [],
+                "informes": [],
             }),
             encoding="utf-8",
         )
 
         list_response = self.client.get("/api/sessions")
         self.assertEqual(list_response.status_code, 200)
-        self.assertIn(session_id, [item["session_id"] for item in list_response.json()["sessions"]])
+        listed_ids = [item["session_id"] for item in list_response.json()["sessions"]]
+        self.assertEqual(listed_ids, [session_id, "older-session"])
+        listed_session = next(item for item in list_response.json()["sessions"] if item["session_id"] == session_id)
+        self.assertEqual(listed_session["titulo"], "Sesión de prueba")
+        self.assertEqual(listed_session["created_at"], "2026-01-01T00:00:00+00:00")
+        older_session = next(item for item in list_response.json()["sessions"] if item["session_id"] == "older-session")
+        self.assertEqual(older_session["titulo"], "Modelos de Mineria de Datos")
 
         restore_response = self.client.get(f"/api/sessions/{session_id}")
         self.assertEqual(restore_response.status_code, 200)
         self.assertEqual(restore_response.json()["resumen"], "Sesión de prueba")
+        self.assertEqual(restore_response.json()["titulo"], "Sesión de prueba")
         self.assertEqual(restore_response.json()["informes"][0]["titulo"], "KDD")
         self.assertEqual(restore_response.json()["session_id"], session_id)
         self.assertEqual(restore_response.json()["graficos"], [f"/api/artifacts/{session_id}/grafico.png"])
@@ -283,11 +328,11 @@ class ApiTestCase(unittest.TestCase):
 
         delete_response = self.client.delete(f"/api/sessions/{session_id}")
         self.assertEqual(delete_response.status_code, 200)
-        self.assertFalse((ARTIFACTS_DIR / session_id).exists())
+        self.assertFalse((api.ARTIFACTS_DIR / session_id).exists())
 
     def test_sessions_are_ignored_when_summary_is_missing(self) -> None:
         session_id = "empty-session"
-        (ARTIFACTS_DIR / session_id).mkdir(parents=True, exist_ok=True)
+        (api.ARTIFACTS_DIR / session_id).mkdir(parents=True, exist_ok=True)
 
         response = self.client.get("/api/sessions")
         self.assertEqual(response.status_code, 200)
