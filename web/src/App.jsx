@@ -8,7 +8,24 @@ const API_CONFIGURATION_ERROR = 'Falta configurar VITE_API_URL en Netlify con la
 
 async function apiFetch(path, options) {
   if (!API_URL) throw new Error(API_CONFIGURATION_ERROR)
-  return fetch(`${API_URL}${path}`, options)
+  const method = (options?.method || 'GET').toUpperCase()
+  const attempts = method === 'GET' ? 3 : 1
+
+  for (let attempt = 0; attempt < attempts; attempt += 1) {
+    try {
+      const response = await fetch(`${API_URL}${path}`, options)
+      if (method === 'GET' && response.status >= 500 && attempt + 1 < attempts) {
+        await new Promise((resolve) => setTimeout(resolve, 700 * (attempt + 1)))
+        continue
+      }
+      return response
+    } catch (requestError) {
+      if (attempt + 1 >= attempts) throw requestError
+      await new Promise((resolve) => setTimeout(resolve, 700 * (attempt + 1)))
+    }
+  }
+
+  throw new Error('No fue posible conectar con el servicio API.')
 }
 
 function artifactTitle(url) {
@@ -162,6 +179,7 @@ function App() {
     setImportProgress('')
     setError('')
     let importedCount = 0
+    let unassignedCount = 0
     const importedThemes = new Set()
 
     try {
@@ -191,6 +209,7 @@ function App() {
         }
 
         importedCount += payload.documentos ?? batch.length
+        unassignedCount += payload.sin_clasificar ?? 0
         payload.temas?.forEach((topic) => importedThemes.add(topic))
       }
 
@@ -205,7 +224,10 @@ function App() {
           setTopicDocuments(topicPayload.documentos ?? [])
         }
       }
-      setImportMessage(`Se importaron ${importedCount} documentos en ${importedThemes.size} temas.`)
+      setImportMessage(
+        `Se importaron ${importedCount} documentos en ${importedThemes.size} temas.`
+        + (unassignedCount ? ` ${unassignedCount} archivo(s) sin subcarpeta quedaron en “Sin clasificar”.` : ''),
+      )
     } catch (requestError) {
       loadTopics()
       loadDocumentLibrary()

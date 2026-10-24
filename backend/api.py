@@ -209,8 +209,7 @@ async def importar_documentos(
     if not isinstance(relative_paths, list) or len(relative_paths) != len(files):
         raise HTTPException(status_code=400, detail="No coinciden los archivos con sus rutas.")
 
-    imported_themes: set[str] = set()
-    imported_count = 0
+    prepared_files: list[tuple[UploadFile, list[str], str, bool]] = []
     for upload, raw_path in zip(files, relative_paths):
         if not isinstance(raw_path, str):
             raise HTTPException(status_code=400, detail="Ruta de archivo no válida.")
@@ -227,34 +226,49 @@ async def importar_documentos(
         if upload.size and upload.size > UPLOAD_LIMIT:
             raise HTTPException(status_code=413, detail=f"Archivo demasiado grande: {upload.filename}")
 
-        if parts[0].casefold() in {"documentos", "documents"}:
+        is_documents_root = parts[0].casefold() in {"documentos", "documents"}
+        if is_documents_root:
             relative_parts = parts[1:]
         else:
             relative_parts = parts
-        if len(relative_parts) < 2:
+        if not relative_parts:
             raise HTTPException(
                 status_code=400,
-                detail="La carpeta seleccionada debe contener subcarpetas con los temas.",
+                detail="No se pudo identificar la ruta del documento seleccionado.",
             )
 
-        theme_name = _safe_folder_name(relative_parts[0])
-        target_dir = DOCUMENTS_DIR / theme_name
-        for directory in relative_parts[1:-1]:
-            target_dir /= _safe_folder_name(directory)
-        target_dir.mkdir(parents=True, exist_ok=True)
+        is_unassigned = is_documents_root and len(relative_parts) == 1
+        if is_unassigned:
+            theme_name = "Sin clasificar"
+            nested_parts = [theme_name, relative_parts[0]]
+        else:
+            theme_name = _safe_folder_name(relative_parts[0])
+            nested_parts = [theme_name, *relative_parts[1:]]
 
-        filename = _safe_filename(relative_parts[-1])
-        target = target_dir / filename
+        if Path(nested_parts[-1]).suffix.lower() not in ALLOWED_EXTENSIONS:
+            raise HTTPException(status_code=400, detail="Solo se aceptan archivos PDF y TXT.")
+        if upload.size and upload.size > UPLOAD_LIMIT:
+            raise HTTPException(status_code=413, detail=f"Archivo demasiado grande: {upload.filename}")
+        prepared_files.append((upload, [_safe_folder_name(part) for part in nested_parts], theme_name, is_unassigned))
+
+    imported_themes: set[str] = set()
+    imported_count = 0
+    unassigned_count = 0
+    for upload, relative_parts, theme_name, is_unassigned in prepared_files:
+        target = DOCUMENTS_DIR.joinpath(*relative_parts)
+        target.parent.mkdir(parents=True, exist_ok=True)
         if target.exists():
-            target = target_dir / f"{Path(filename).stem}_{uuid.uuid4().hex[:8]}{Path(filename).suffix}"
+            target = target.with_name(f"{target.stem}_{uuid.uuid4().hex[:8]}{target.suffix}")
         target.write_bytes(await upload.read())
         imported_themes.add(theme_name)
         imported_count += 1
+        unassigned_count += int(is_unassigned)
 
     return {
         "status": "imported",
         "documentos": imported_count,
         "temas": sorted(imported_themes),
+        "sin_clasificar": unassigned_count,
     }
 
 

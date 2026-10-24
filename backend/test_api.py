@@ -114,24 +114,32 @@ class ApiTestCase(unittest.TestCase):
 
         theme_name = f"Importacion de prueba {uuid.uuid4().hex[:8]}"
         direct_theme_name = f"Tema directo {uuid.uuid4().hex[:8]}"
+        unassigned_filename = f"nota-en-raiz-{uuid.uuid4().hex[:8]}.txt"
+        unassigned_dir = documents_dir / "Sin clasificar"
+        unassigned_dir_existed = unassigned_dir.exists()
         relative_paths = [
             f"documentos/{theme_name}/subcarpeta/articulo.txt",
             f"{direct_theme_name}/articulo-directo.txt",
+            f"documentos/{unassigned_filename}",
         ]
         response = self.client.post(
             "/api/documentos/importar",
             files=[
                 ("files", ("articulo.txt", b"contenido de prueba", "text/plain")),
                 ("files", ("articulo-directo.txt", b"tema seleccionado directamente", "text/plain")),
+                ("files", (unassigned_filename, b"contenido sin tema", "text/plain")),
             ],
             data={"rutas": json.dumps(relative_paths)},
         )
         self.assertEqual(response.status_code, 200, response.text)
-        self.assertEqual(response.json()["documentos"], 2)
+        self.assertEqual(response.json()["documentos"], 3)
+        self.assertEqual(response.json()["sin_clasificar"], 1)
         self.assertIn(theme_name, response.json()["temas"])
         self.assertIn(direct_theme_name, response.json()["temas"])
+        self.assertIn("Sin clasificar", response.json()["temas"])
         self.assertTrue((documents_dir / theme_name / "subcarpeta" / "articulo.txt").is_file())
         self.assertTrue((documents_dir / direct_theme_name / "articulo-directo.txt").is_file())
+        self.assertTrue((unassigned_dir / unassigned_filename).is_file())
 
         listing = self.client.get(f"/api/temas/{quote(theme_name)}/documentos")
         self.assertEqual(listing.status_code, 200, listing.text)
@@ -139,6 +147,9 @@ class ApiTestCase(unittest.TestCase):
 
         shutil.rmtree(documents_dir / theme_name)
         shutil.rmtree(documents_dir / direct_theme_name)
+        (unassigned_dir / unassigned_filename).unlink()
+        if not unassigned_dir_existed:
+            unassigned_dir.rmdir()
 
     def test_theme_folders_are_listed_and_created(self) -> None:
         theme_name = "Nuevo Tema de Prueba"
