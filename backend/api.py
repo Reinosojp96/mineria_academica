@@ -31,11 +31,16 @@ DEFAULT_DOCUMENTS_DIR = BASE_DIR / "documentos"
 UPLOAD_LIMIT = 100 * 1024 * 1024
 ALLOWED_EXTENSIONS = {".pdf", ".txt"}
 LOCAL_ORIGINS = ["http://localhost:5173", "http://127.0.0.1:5173"]
-FRONTEND_ORIGINS = [
+CONFIGURED_FRONTEND_ORIGINS = [
     origin.strip().rstrip("/")
     for origin in os.environ.get("FRONTEND_ORIGINS", "").split(",")
     if origin.strip()
-] or LOCAL_ORIGINS
+]
+FRONTEND_ORIGINS = list(dict.fromkeys([
+    *CONFIGURED_FRONTEND_ORIGINS,
+    *(LOCAL_ORIGINS if not CONFIGURED_FRONTEND_ORIGINS else []),
+    "https://mineriadedatos.netlify.app",
+]))
 
 app = FastAPI(title="Minería Académica", version="1.0.0")
 app.add_middleware(

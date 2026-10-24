@@ -11,8 +11,9 @@ Netlify no ejecuta este backend Python ni puede acceder a carpetas de tu PC.
    `render.yaml`, instalará `requirements.txt` y arrancará FastAPI.
 3. Guarda la URL asignada, por ejemplo `https://mineria-academica-api.onrender.com`.
 4. En el servicio Render, define `FRONTEND_ORIGINS` con el origen del sitio
-   Netlify, sin ruta final, por ejemplo `https://mineria-academica.netlify.app`.
-   Puedes separar varios orígenes con comas.
+   Netlify, sin ruta final. El dominio principal actual es
+   `https://mineriadedatos.netlify.app`. Puedes separar varios orígenes con
+   comas si también publicas sitios de vista previa.
 
 El disco se monta en `/var/data`. En el primer inicio se copian allí las carpetas
 incluidas en `backend/documentos`; las cargas posteriores y las sesiones se
@@ -26,8 +27,8 @@ guardan en ese disco.
 3. En **Site configuration > Environment variables**, crea
    `VITE_API_URL` con la URL pública del backend Render, sin `/` final.
 4. Despliega el sitio y copia su dominio `https://...netlify.app`.
-5. Añade ese dominio en la variable `FRONTEND_ORIGINS` de Render y reinicia el
-   servicio.
+5. Si cambias el dominio de Netlify, actualiza `FRONTEND_ORIGINS` en Render y
+   redepliega el backend.
 
 Comprueba `https://TU-API.onrender.com/api/health`; debe responder con
 `{"status":"ok","service":"mineria-academica"}`. Luego abre el dominio

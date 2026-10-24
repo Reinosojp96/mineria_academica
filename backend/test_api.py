@@ -34,6 +34,20 @@ class ApiTestCase(unittest.TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json()["status"], "ok")
 
+    def test_current_netlify_origin_is_allowed_by_cors(self) -> None:
+        response = self.client.options(
+            "/api/sessions",
+            headers={
+                "Origin": "https://mineriadedatos.netlify.app",
+                "Access-Control-Request-Method": "GET",
+            },
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(
+            response.headers["access-control-allow-origin"],
+            "https://mineriadedatos.netlify.app",
+        )
+
     def test_temas(self) -> None:
         response = self.client.get("/api/temas")
         self.assertEqual(response.status_code, 200)
