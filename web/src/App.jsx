@@ -19,6 +19,8 @@ function artifactTitle(url) {
 }
 
 function App() {
+  const [activeTab, setActiveTab] = useState('ingesta')
+  const [darkMode, setDarkMode] = useState(false)
   const [topics, setTopics] = useState([])
   const [selectedTopic, setSelectedTopic] = useState('')
   const [documents, setDocuments] = useState([])
@@ -244,6 +246,7 @@ function App() {
       }
       setResult(payload)
       setSelectedReportIndex(0)
+      setActiveTab('informe')
       loadSessions()
     } catch (requestError) {
       setError(requestError.message)
@@ -263,6 +266,7 @@ function App() {
       setResult(payload)
       setSelectedReportIndex(0)
       setDocuments([])
+      setActiveTab('informe')
       setError('')
       requestAnimationFrame(() => resultsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }))
     } catch (requestError) {
@@ -318,22 +322,61 @@ function App() {
   }
 
   return (
-    <main className="app-shell">
-      <header className="hero">
-        <div>
-          <p className="eyebrow">Minería académica</p>
-          <h1>Analiza documentos y descubre sus temas.</h1>
-          <p className="subtitle">
-            Sube textos o artículos, ajusta la relevancia y obtén gráficos, informes y resultados en español.
-          </p>
+    <main className="app-shell" data-theme={darkMode ? 'dark' : 'light'}>
+      <header className="app-header">
+        <div className="header-main">
+          <a className="brand-lockup" href="#ingesta" onClick={() => setActiveTab('ingesta')}>
+            <span className="brand-mark material-symbols-outlined" aria-hidden="true">database</span>
+            <span className="brand-copy">
+              <span className="brand-title">Minería Académica <span className="brand-badge">LAB</span></span>
+              <span className="brand-subtitle">Laboratorio Documental</span>
+            </span>
+          </a>
+          <div className="header-tools">
+            <button className="icon-button theme-toggle" type="button" aria-label={darkMode ? 'Activar modo claro' : 'Activar modo oscuro'} onClick={() => setDarkMode((current) => !current)}>
+              <span className="material-symbols-outlined" aria-hidden="true">{darkMode ? 'light_mode' : 'dark_mode'}</span>
+            </button>
+            <span className="header-avatar material-symbols-outlined" aria-label="Usuario local">person</span>
+          </div>
         </div>
-        <div className="status-card">
-          <span className="status-dot" />
-          Servicio local disponible
+
+        <div className="corpus-bar">
+          <div className="corpus-context">
+            <span className="material-symbols-outlined" aria-hidden="true">science</span>
+            <label htmlFor="header-topic-select">CORPUS:</label>
+            <select id="header-topic-select" value={selectedTopic} onChange={(event) => setSelectedTopic(event.target.value)}>
+              <option value="">Todos los temas</option>
+              {topics.map((topic) => <option key={topic} value={topic}>{topic}</option>)}
+            </select>
+          </div>
+          <span className="engine-status"><span className="status-dot" />API {API_URL ? 'CONFIGURADA' : 'SIN CONFIGURAR'}</span>
         </div>
+
+        <nav className="main-tabs" aria-label="Secciones del espacio de trabajo" role="tablist">
+          {[
+            ['ingesta', 'folder_special', 'Ingesta & Corpus'],
+            ['config', 'tune', 'Configuración'],
+            ['sesiones', 'history', 'Sesiones'],
+            ['informe', 'assessment', 'Informe Evidencia'],
+          ].map(([tab, icon, label]) => (
+            <button
+              key={tab}
+              className={`main-tab${activeTab === tab ? ' active' : ''}`}
+              type="button"
+              role="tab"
+              aria-selected={activeTab === tab}
+              onClick={() => setActiveTab(tab)}
+            >
+              <span className="material-symbols-outlined" aria-hidden="true">{icon}</span>
+              {label}
+            </button>
+          ))}
+        </nav>
       </header>
 
-      <section className="panel session-panel">
+      <div className="workspace">
+
+      <section id="ingesta" className={`panel session-panel corpus-panel${activeTab !== 'ingesta' ? ' tab-hidden' : ''}`}>
         <div className="section-heading">
           <div>
             <p className="section-label">Biblioteca de temas</p>
@@ -342,18 +385,20 @@ function App() {
           <button className="secondary-button" onClick={() => { loadTopics(); loadDocumentLibrary(); }}>Actualizar</button>
         </div>
 
-        <div className="theme-library">
-          {topics.map((topic) => (
-            <button
-              key={topic}
-              type="button"
-              className={`theme-chip${selectedTopic === topic ? ' selected' : ''}`}
-              aria-pressed={selectedTopic === topic}
-              onClick={() => setSelectedTopic(topic)}
-            >
-              {topic}
-            </button>
-          ))}
+        <div className="corpus-selector">
+          <label htmlFor="corpus-topic-select">
+            <span>Carpeta temática activa</span>
+            <span className="index-status">Índice activo</span>
+          </label>
+          <select id="corpus-topic-select" value={selectedTopic} onChange={(event) => setSelectedTopic(event.target.value)}>
+            <option value="">Todos los temas</option>
+            {topics.map((topic) => <option key={topic} value={topic}>{topic}</option>)}
+          </select>
+          <div className="corpus-metrics" aria-label="Estadísticas de la colección actual">
+            <div><span>Documentos</span><strong>{topicDocuments.length}</strong></div>
+            <div><span>Temas</span><strong>{topics.length}</strong></div>
+            <div><span>Formatos</span><strong>PDF / TXT</strong></div>
+          </div>
         </div>
 
         <div className="topic-documents">
@@ -381,14 +426,6 @@ function App() {
         <div className="document-library">
           <div className="document-library-heading">
             <h3>Documentos guardados</h3>
-            <button
-              className="secondary-button small-button"
-              type="button"
-              disabled={isImportingFolder}
-              onClick={() => folderInputRef.current?.click()}
-            >
-              {isImportingFolder ? importProgress || 'Importando…' : 'Importar carpeta documentos'}
-            </button>
           </div>
           <input
             ref={folderInputRef}
@@ -414,7 +451,7 @@ function App() {
         </div>
       </section>
 
-      <section className="panel session-panel">
+      <section id="sesiones" className={`panel session-panel sessions-view${activeTab !== 'sesiones' ? ' tab-hidden' : ''}`}>
         <div className="section-heading">
           <div>
             <p className="section-label">Sesiones guardadas</p>
@@ -447,15 +484,22 @@ function App() {
         )}
       </section>
 
-      <section className="panel upload-panel">
+      <section className={`panel upload-panel ingestion-panel${activeTab !== 'ingesta' ? ' tab-hidden' : ''}`}>
         <div className="section-heading">
           <div>
-            <p className="section-label">1. Documentos</p>
-            <h2>Archivos de entrada</h2>
+            <p className="section-label">Pipeline de datos</p>
+            <h2>Entorno de Ingesta Documental</h2>
           </div>
-          <button className="secondary-button" onClick={() => fileInputRef.current?.click()}>
-            Seleccionar archivos
-          </button>
+          <div className="ingestion-actions">
+            <button className="primary-button folder-action" type="button" disabled={isImportingFolder} onClick={() => folderInputRef.current?.click()}>
+              <span className="material-symbols-outlined" aria-hidden="true">folder_open</span>
+              {isImportingFolder ? importProgress || 'Importando…' : 'Importar carpeta documentos'}
+            </button>
+            <button className="secondary-button manual-upload-action" type="button" onClick={() => fileInputRef.current?.click()}>
+              <span className="material-symbols-outlined" aria-hidden="true">upload_file</span>
+              Añadir archivos
+            </button>
+          </div>
         </div>
 
         <input
@@ -480,15 +524,17 @@ function App() {
             </div>
           ) : (
             <>
-              <span className="upload-icon">⇪</span>
-              <strong>Arrastra aquí tus documentos</strong>
+              <span className="upload-icon material-symbols-outlined" aria-hidden="true">upload_file</span>
+              <strong>Arrastra aquí tus documentos o selecciónalos</strong>
               <span>PDF o TXT · Máximo 100 MB por archivo</span>
             </>
           )}
         </div>
+        {importProgress && <div className="ingestion-progress" role="status"><span className="material-symbols-outlined" aria-hidden="true">sync</span>{importProgress}</div>}
+        {importMessage && <div className="ingestion-success" role="status"><span className="material-symbols-outlined" aria-hidden="true">check_circle</span>{importMessage}</div>}
       </section>
 
-      <section className="controls-grid">
+      <section id="config" className={`controls-grid config-view${activeTab !== 'config' ? ' tab-hidden' : ''}`}>
         <div className="panel">
           <p className="section-label">2. Configuración</p>
           <h2>Parámetros de análisis</h2>
@@ -535,10 +581,10 @@ function App() {
         </div>
       </section>
 
-      {error && <div className="notice error" role="alert">{error}</div>}
+      {error && <div className="notice error workspace-notice" role="alert">{error}</div>}
 
-      {result && (
-        <section className="panel results-panel" ref={resultsRef}>
+      {result && activeTab === 'informe' && (
+        <section id="informe" className="panel results-panel" ref={resultsRef}>
           <div className="section-heading">
             <div>
               <p className="section-label">4. Resultados</p>
@@ -688,6 +734,29 @@ function App() {
           </div>
         </section>
       )}
+      {activeTab === 'informe' && !result && (
+        <section id="informe" className="empty-report">
+          <span className="material-symbols-outlined" aria-hidden="true">description</span>
+          <h2>Aún no hay un informe</h2>
+          <p>Selecciona un corpus, ajusta el análisis y ejecuta el proceso para consultar la evidencia.</p>
+          <button className="primary-button" type="button" onClick={() => setActiveTab('ingesta')}>Ir a Ingesta & Corpus</button>
+        </section>
+      )}
+      </div>
+
+      <nav className="mobile-bottom-nav" aria-label="Navegación inferior">
+        {[
+          ['ingesta', 'folder_special', 'Ingesta'],
+          ['config', 'tune', 'Ajustes'],
+          ['sesiones', 'history', 'Sesiones'],
+          ['informe', 'assessment', 'Informe'],
+        ].map(([tab, icon, label]) => (
+          <button key={tab} type="button" className={activeTab === tab ? 'active' : ''} aria-current={activeTab === tab ? 'page' : undefined} onClick={() => setActiveTab(tab)}>
+            <span className="material-symbols-outlined" aria-hidden="true">{icon}</span>
+            <span>{label}</span>
+          </button>
+        ))}
+      </nav>
     </main>
   )
 }

@@ -1,0 +1,837 @@
+<!DOCTYPE html>
+
+<html class="" lang="es"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" name="viewport"/><meta content="mobile_tab" name="shell-type"/><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"/><link href="https://fonts.googleapis.com" rel="preconnect"/><link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&amp;family=JetBrains+Mono:wght@400;500;600&amp;family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;1,6..72,400&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/><script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script><script id="tailwind-config">tailwind.config = { darkMode: "class", theme: { extend: { "colors": { "surface": "#faf8ff", "tertiary": "#003350", "inverse-on-surface": "#eef0ff", "primary-fixed-dim": "#9ad1cb", "tertiary-fixed": "#cce5ff", "on-secondary-fixed": "#00201d", "primary-fixed": "#b5ede7", "on-secondary": "#ffffff", "secondary-fixed-dim": "#80d5cb", "surface-container-highest": "#dae2fd", "on-tertiary-fixed": "#001d31", "on-error": "#ffffff", "tertiary-container": "#004a72", "surface-container-low": "#f2f3ff", "primary-container": "#134e4a", "inverse-surface": "#283044", "on-primary": "#ffffff", "on-background": "#131b2e", "surface-tint": "#316763", "surface-dim": "#d2d9f4", "inverse-primary": "#9ad1cb", "secondary": "#006a63", "on-secondary-fixed-variant": "#00504a", "on-error-container": "#93000a", "error": "#ba1a1a", "outline": "#707977", "on-primary-container": "#87beb8", "error-container": "#ffdad6", "on-tertiary": "#ffffff", "surface-container-lowest": "#ffffff", "primary": "#003633", "background": "#faf8ff", "outline-variant": "#bfc8c6", "on-surface": "#131b2e", "on-surface-variant": "#404847", "surface-container": "#eaedff", "surface-variant": "#dae2fd", "tertiary-fixed-dim": "#93ccff", "on-primary-fixed-variant": "#144f4b", "on-primary-fixed": "#00201e", "on-tertiary-container": "#64bbff", "surface-container-high": "#e2e7ff", "on-tertiary-fixed-variant": "#004b73", "secondary-fixed": "#9cf2e8", "secondary-container": "#99efe5", "surface-bright": "#faf8ff", "on-secondary-container": "#006f67" }, "borderRadius": { "DEFAULT": "0.125rem", "lg": "0.25rem", "xl": "0.5rem", "full": "0.75rem" }, "spacing": { "margin": "1rem", "gutter": "1rem", "space-lg": "1.25rem", "margin-desktop": "2rem", "space-xl": "2rem", "space-xs": "0.25rem", "gutter-desktop": "1.5rem", "space-sm": "0.5rem", "space-md": "0.75rem" }, "fontFamily": { "display-lg-mobile": ["Newsreader"], "headline-sm": ["Inter"], "headline-lg": ["Newsreader"], "body-sm": ["Inter"], "body-lg": ["Newsreader"], "headline-md": ["Newsreader"], "label-lg": ["Inter"], "display-lg": ["Newsreader"], "body-md": ["Inter"], "label-sm": ["JetBrains Mono"], "label-md": ["JetBrains Mono"] }, "fontSize": { "display-lg-mobile": ["30px", { "lineHeight": "38px", "letterSpacing": "-0.01em", "fontWeight": "600" }], "headline-sm": ["18px", { "lineHeight": "24px", "fontWeight": "600" }], "headline-lg": ["28px", { "lineHeight": "36px", "letterSpacing": "-0.015em", "fontWeight": "600" }], "body-sm": ["13px", { "lineHeight": "18px", "fontWeight": "400" }], "body-lg": ["18px", { "lineHeight": "28px", "fontWeight": "400" }], "headline-md": ["22px", { "lineHeight": "28px", "fontWeight": "500" }], "label-lg": ["14px", { "lineHeight": "20px", "fontWeight": "500" }], "display-lg": ["40px", { "lineHeight": "48px", "letterSpacing": "-0.02em", "fontWeight": "600" }], "body-md": ["15px", { "lineHeight": "22px", "fontWeight": "400" }], "label-sm": ["10px", { "lineHeight": "14px", "letterSpacing": "0.04em", "fontWeight": "500" }], "label-md": ["12px", { "lineHeight": "16px", "letterSpacing": "0.02em", "fontWeight": "500" }] } } } };</script>
+<style>
+@layer base {
+  html, body { width: 100%; margin: 0; padding: 0; }
+  body { overscroll-behavior: none; }
+  .pb-safe { padding-bottom: env(safe-area-inset-bottom, 0px); }
+  .pt-safe { padding-top: env(safe-area-inset-top, 0px); }
+  main > :first-child { margin-top: 0 !important; }
+  main > :last-child { margin-bottom: 0 !important; }
+}
+::-webkit-scrollbar { display: none; }
+body { min-height: max(884px, 100dvh); }
+
+/* Tema oscuro calibrado para investigación científica */
+.dark body {
+  background-color: #0b1319 !important;
+  color: #f1f5f9 !important;
+}
+.dark .bg-surface {
+  background-color: #0b1319 !important;
+}
+.dark .bg-surface-container-lowest {
+  background-color: #131f28 !important;
+  border-color: #1e2e3b !important;
+}
+.dark .bg-surface-container-low {
+  background-color: #0f1922 !important;
+  border-color: #1e2e3b !important;
+}
+.dark .bg-surface-container {
+  background-color: #1b2834 !important;
+}
+.dark .bg-surface-container-high {
+  background-color: #243444 !important;
+}
+.dark .bg-surface-container-highest {
+  background-color: #2b3e51 !important;
+}
+.dark .text-on-surface {
+  color: #f1f5f9 !important;
+}
+.dark .text-on-surface-variant {
+  color: #94a3b8 !important;
+}
+.dark .text-primary {
+  color: #2dd4bf !important;
+}
+.dark .text-secondary {
+  color: #14b8a6 !important;
+}
+.dark .bg-primary {
+  background-color: #0f766e !important;
+  color: #ffffff !important;
+}
+.dark .bg-primary-container {
+  background-color: #115e59 !important;
+  color: #f0fdfa !important;
+}
+.dark .bg-secondary-container {
+  background-color: #134e4a !important;
+  color: #ccfbf1 !important;
+}
+.dark .border-outline-variant {
+  border-color: #334155 !important;
+}
+.dark .shadow-sm {
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.4) !important;
+}
+.dark .bg-error-container {
+  background-color: #450a0a !important;
+  color: #fecaca !important;
+}
+</style>
+</head>
+<body class="bg-surface font-body-md text-on-surface flex flex-col min-h-screen transition-colors duration-200">
+<header class="fixed top-0 w-full z-50 pt-safe bg-surface/90 dark:bg-[#0b1319]/90 backdrop-blur-xl border-b border-surface-container dark:border-slate-800 shadow-[0_1px_8px_rgba(0,0,0,0.04)] transition-colors duration-200">
+<div class="h-16 px-margin flex items-center justify-between gap-space-sm">
+<div class="flex items-center gap-space-sm min-w-0">
+<img alt="Minería Académica Logo" class="h-8 w-auto object-contain flex-shrink-0" src="https://lh3.googleusercontent.com/aida/AEtjO1W0ZvF6LgYfDlkaJPEa-e8cAyTo76a_FGc1ZoXdTZ944R4_z_isjOZ-mzTDLmc1wZHJX1Es0uZInIVQHfqJmOVk0AnoPLSWLONoGdZ8HaWCdJbzasI6TeoOqDNKui9Ikh_bJ6qt7FiCIdGANn1QdPyrBUOa3SFbDk7mIs1hoK1_D-pjXI3YkjXO5jlYcyR3CeLoL7d1G7QJYP514bFm_SJKqh6utQy7hRqU_Nn5Egddyua7zGyhZxEA4-A"/>
+<div class="flex flex-col min-w-0">
+<div class="flex items-center gap-space-xs">
+<span class="font-headline-sm text-headline-sm text-primary font-semibold tracking-tight truncate">Minería Académica</span>
+<span class="font-label-sm text-label-sm px-space-xs py-0.5 rounded-lg bg-surface-container text-on-surface-variant uppercase">Lab</span>
+</div>
+<span class="font-label-sm text-label-sm text-on-surface-variant truncate">Laboratorio Documental</span>
+</div>
+</div>
+<div class="flex items-center gap-space-xs flex-shrink-0">
+<!-- Botón Selector Claro / Oscuro -->
+<button aria-label="Alternar modo oscuro o claro" class="w-9 h-9 rounded-xl bg-surface-container hover:bg-surface-container-high dark:bg-slate-800 dark:hover:bg-slate-700 flex items-center justify-center text-on-surface transition-all active:scale-95" id="theme-toggle-btn" onclick="toggleTheme()" title="Cambiar tema">
+<span class="material-symbols-outlined text-[20px] text-primary" id="theme-icon">dark_mode</span>
+</button>
+<div class="w-8 h-8 rounded-full bg-primary flex items-center justify-center flex-shrink-0">
+<span class="material-symbols-outlined text-on-primary text-[18px]">person</span>
+</div>
+</div>
+</div>
+<!-- Barra de Contexto del Proyecto -->
+<div class="px-margin py-1.5 flex items-center justify-between gap-space-sm bg-surface-container-low/80 dark:bg-slate-900/80 border-t border-surface-container/60 dark:border-slate-800">
+<div class="flex items-center gap-space-xs text-on-surface-variant overflow-hidden">
+<span class="material-symbols-outlined text-[15px] text-secondary flex-shrink-0">science</span>
+<span class="font-label-sm text-label-sm truncate font-medium">CORPUS:</span>
+<button class="flex items-center gap-0.5 font-label-sm text-label-sm text-primary font-semibold truncate hover:text-secondary">
+<span class="truncate">BioMed-2024</span>
+<span class="material-symbols-outlined text-[16px]">expand_more</span>
+</button>
+</div>
+<div class="flex items-center gap-space-xs flex-shrink-0">
+<span class="w-1.5 h-1.5 rounded-full bg-secondary"></span>
+<span class="font-label-sm text-label-sm text-on-surface-variant font-mono">MOTOR ACTIVO</span>
+</div>
+</div>
+<!-- ==========================================
+     SELECTOR DE PESTAÑAS PRINCIPALES (TABS)
+     ========================================== -->
+<div class="px-margin bg-surface dark:bg-[#0b1319] border-b border-surface-container dark:border-slate-800">
+<nav aria-label="Pestañas de navegación de trabajo" class="flex items-center gap-1.5 overflow-x-auto py-2 -mx-1 px-1" role="tablist">
+<button aria-controls="view-ingesta" aria-selected="true" class="main-tab-btn flex items-center gap-1.5 px-3 py-1.5 rounded-xl font-label-md text-label-md whitespace-nowrap transition-all font-semibold bg-primary text-on-primary shadow-sm" data-tab="ingesta" onclick="setActiveTab('ingesta')" role="tab">
+<span class="material-symbols-outlined text-[18px]">folder_special</span>
+<span>Ingesta &amp; Corpus</span>
+</button>
+<button aria-controls="view-config" aria-selected="false" class="main-tab-btn flex items-center gap-1.5 px-3 py-1.5 rounded-xl font-label-md text-label-md whitespace-nowrap transition-all font-medium text-on-surface-variant hover:text-on-surface hover:bg-surface-container" data-tab="config" onclick="setActiveTab('config')" role="tab">
+<span class="material-symbols-outlined text-[18px]">tune</span>
+<span>Configuración</span>
+</button>
+<button aria-controls="view-sesiones" aria-selected="false" class="main-tab-btn flex items-center gap-1.5 px-3 py-1.5 rounded-xl font-label-md text-label-md whitespace-nowrap transition-all font-medium text-on-surface-variant hover:text-on-surface hover:bg-surface-container" data-tab="sesiones" onclick="setActiveTab('sesiones')" role="tab">
+<span class="material-symbols-outlined text-[18px]">history</span>
+<span>Sesiones</span>
+</button>
+<button aria-controls="view-informe" aria-selected="false" class="main-tab-btn flex items-center gap-1.5 px-3 py-1.5 rounded-xl font-label-md text-label-md whitespace-nowrap transition-all font-medium text-on-surface-variant hover:text-on-surface hover:bg-surface-container" data-tab="informe" onclick="setActiveTab('informe')" role="tab">
+<span class="material-symbols-outlined text-[18px]">assessment</span>
+<span>Informe Evidencia</span>
+</button>
+</nav>
+</div>
+</header>
+<main class="flex flex-col relative w-full pt-36 pb-24 bg-surface min-h-screen">
+<div class="flex flex-col w-full pb-8">
+<!-- ==========================================
+     VISTA 1: INGESTA & BIBLIOTECA DE TEMAS
+     ========================================== -->
+<div class="tab-view flex flex-col gap-space-lg" id="view-ingesta">
+<!-- SECCIÓN DE ACCIÓN E INGESTA -->
+<section aria-label="Ingesta documental y estado del sistema" class="p-margin bg-surface-container-low border border-surface-container dark:border-slate-800 shadow-sm mx-margin rounded-2xl">
+<div class="flex flex-col gap-space-md">
+<!-- Encabezado de Ingesta y Disparador Primario -->
+<div class="flex flex-col sm:flex-row sm:items-center justify-between gap-space-sm">
+<div class="min-w-0">
+<span class="font-label-sm text-label-sm uppercase tracking-wider text-secondary font-semibold">Pipeline de Datos ETL</span>
+<h2 class="font-headline-sm text-headline-sm text-on-surface font-semibold">Entorno de Ingesta Documental</h2>
+</div>
+<!-- Botón de Ingesta de Carpeta -->
+<label class="cursor-pointer inline-flex items-center justify-center gap-space-xs px-space-md py-space-sm bg-primary text-on-primary font-label-lg text-label-lg rounded-xl shadow-sm hover:opacity-95 active:scale-95 transition-all" for="folder-upload-input">
+<span class="material-symbols-outlined text-[20px]">folder_open</span>
+<span>Importar carpeta documentos</span>
+<input aria-label="Cargar carpeta completa de documentos académicos" class="sr-only" directory="" id="folder-upload-input" multiple="" type="file" webkitdirectory=""/>
+</label>
+</div>
+<!-- Zona de Arrastre Táctil / Dropzone Minimalista -->
+<div aria-label="Zona táctil de sincronización de ficheros" class="p-space-md bg-surface-container-lowest border border-surface-container/60 dark:border-slate-800 rounded-xl flex items-center justify-between gap-space-sm shadow-sm" role="region">
+<div class="flex items-center gap-space-sm min-w-0">
+<span class="material-symbols-outlined text-secondary text-[24px] flex-shrink-0">upload_file</span>
+<div class="flex flex-col min-w-0">
+<span class="font-label-md text-label-md text-on-surface font-medium truncate">Arrastre archivos PDF / RIS / BibTeX</span>
+<span class="font-body-sm text-body-sm text-on-surface-variant truncate">Soporte directo OCR, extracción de metadatos y DOI resolver</span>
+</div>
+</div>
+<span class="font-label-sm text-label-sm px-space-xs py-0.5 rounded bg-surface-container text-on-surface-variant font-mono flex-shrink-0">PDF/TXT/RIS</span>
+</div>
+<!-- Pestañas de Estado Interactivas -->
+<div class="flex flex-col gap-space-xs">
+<div aria-label="Selector de estado de procesamiento" class="flex items-center justify-between" role="tablist">
+<span class="font-label-sm text-label-sm text-on-surface-variant uppercase font-medium">Monitor de Ingesta</span>
+<div class="flex gap-space-xs">
+<button aria-selected="true" class="px-space-xs py-0.5 font-label-sm text-label-sm rounded bg-surface-container-highest text-primary font-semibold" id="tab-btn-progress" onclick="switchState('progress')" role="tab">En Curso</button>
+<button aria-selected="false" class="px-space-xs py-0.5 font-label-sm text-label-sm rounded bg-surface-container text-on-surface-variant hover:text-on-surface font-medium" id="tab-btn-success" onclick="switchState('success')" role="tab">Sincronizado</button>
+<button aria-selected="false" class="px-space-xs py-0.5 font-label-sm text-label-sm rounded bg-surface-container text-on-surface-variant hover:text-on-surface font-medium" id="tab-btn-error" onclick="switchState('error')" role="tab">Alerta (2)</button>
+</div>
+</div>
+<!-- 1. Estado Progreso -->
+<div class="p-space-md bg-surface-container-lowest border border-surface-container/60 dark:border-slate-800 rounded-xl shadow-sm flex flex-col gap-space-xs" id="state-progress">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-space-xs text-primary font-medium">
+<span class="material-symbols-outlined text-[18px] animate-spin text-secondary">sync</span>
+<span class="font-label-md text-label-md">Ingesta en curso: 42/85 documentos leídos (49%)</span>
+</div>
+<span class="font-label-sm text-label-sm font-mono text-on-surface-variant">ETA: 00:28s</span>
+</div>
+<!-- Barra de Progreso Accesible -->
+<div aria-valuemax="100" aria-valuemin="0" aria-valuenow="49" class="w-full h-2 bg-surface-container-high rounded-full overflow-hidden" role="progressbar">
+<div class="h-full bg-secondary transition-all duration-300" style="width: 49%"></div>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant">Extrayendo n-gramas, lematizando abstractos y computando embeddings vectoriales PubMed-BERT...</p>
+</div>
+<!-- 2. Estado Éxito -->
+<div class="hidden p-space-md bg-secondary-container text-on-secondary-container rounded-xl shadow-sm flex items-start justify-between gap-space-sm" id="state-success">
+<div class="flex items-start gap-space-sm">
+<span class="material-symbols-outlined text-[20px] text-secondary flex-shrink-0 mt-0.5">check_circle</span>
+<div class="flex flex-col">
+<span class="font-label-md text-label-md font-semibold">Carpeta "Corpus_Neurociencia_2024" sincronizada con éxito</span>
+<span class="font-body-sm text-body-sm opacity-90">124 documentos PDF validados, parseados y listos para consulta semántica profunda.</span>
+</div>
+</div>
+<span class="font-label-sm text-label-sm px-space-xs py-0.5 bg-surface-container-lowest text-secondary font-mono rounded flex-shrink-0">100% OK</span>
+</div>
+<!-- 3. Estado Error / Alerta -->
+<div class="hidden p-space-md bg-error-container text-on-error-container rounded-xl shadow-sm flex flex-col gap-space-xs" id="state-error">
+<div class="flex items-start justify-between gap-space-xs">
+<div class="flex items-start gap-space-xs">
+<span class="material-symbols-outlined text-[20px] text-error flex-shrink-0">report_problem</span>
+<div class="flex flex-col">
+<span class="font-label-md text-label-md font-semibold">Fallo en 2 archivos de la ingesta</span>
+<span class="font-body-sm text-body-sm">El archivo <strong class="font-mono">scan_09.pdf</strong> está protegido por contraseña o tiene cabeceras corruptas.</span>
+</div>
+</div>
+</div>
+<div class="flex items-center gap-space-sm pt-space-xs">
+<button class="px-space-sm py-1 bg-error text-on-error font-label-sm text-label-sm rounded font-medium shadow-sm hover:opacity-90">Reintentar lectura</button>
+<button class="px-space-sm py-1 bg-surface-container-lowest text-on-error-container font-label-sm text-label-sm rounded font-medium shadow-sm hover:bg-surface-container">Omitir y continuar</button>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- BIBLIOTECA DE TEMAS Y CORPUS -->
+<section aria-label="Exploración de Colecciones Temáticas" class="px-margin">
+<div class="bg-surface-container-lowest border border-surface-container/60 dark:border-slate-800 rounded-2xl p-space-md shadow-sm flex flex-col gap-space-md">
+<!-- Selector de Carpeta Temática -->
+<div class="flex flex-col gap-space-xs">
+<label class="font-label-md text-label-md text-on-surface font-semibold flex items-center justify-between" for="theme-selector">
+<span>Carpeta Temática Activa</span>
+<span class="font-label-sm text-label-sm text-secondary font-mono">ÍNDICE ACTIVO</span>
+</label>
+<div class="relative">
+<select class="w-full bg-surface-container-low text-on-surface font-body-md text-body-md rounded-xl p-space-sm pr-10 appearance-none focus:outline-none focus:ring-1 focus:ring-primary border border-surface-container dark:border-slate-700" id="theme-selector">
+<option selected="" value="bioethics">Inteligencia Artificial y Ética Biomédica (148 docs)</option>
+<option value="public_health">Políticas Públicas de Salud y Epidemiología (92 docs)</option>
+<option value="epistemology">Modelos Epistemológicos en Medicina Clínica (64 docs)</option>
+</select>
+<span class="material-symbols-outlined pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-[20px]">unfold_more</span>
+</div>
+</div>
+<!-- Tablero de Métricas de Indexación (Bento Grid) -->
+<div aria-label="Estadísticas de la colección actual" class="grid grid-cols-3 gap-space-xs text-center">
+<div class="p-space-xs bg-surface-container-low rounded-lg flex flex-col">
+<span class="font-label-sm text-label-sm text-on-surface-variant">Total Docs</span>
+<span class="font-headline-sm text-headline-sm font-mono font-semibold text-primary">148</span>
+</div>
+<div class="p-space-xs bg-surface-container-low rounded-lg flex flex-col">
+<span class="font-label-sm text-label-sm text-on-surface-variant">Tokens</span>
+<span class="font-headline-sm text-headline-sm font-mono font-semibold text-secondary">1.42M</span>
+</div>
+<div class="p-space-xs bg-surface-container-low rounded-lg flex flex-col">
+<span class="font-label-sm text-label-sm text-on-surface-variant">Últ. Sync</span>
+<span class="font-headline-sm text-headline-sm font-mono font-semibold text-on-surface">14:02h</span>
+</div>
+</div>
+<!-- Lista Colapsable de Documentos del Corpus -->
+<div class="flex flex-col gap-space-xs">
+<div class="flex items-center justify-between">
+<span class="font-label-md text-label-md font-semibold text-on-surface">Muestra del Corpus Seleccionado</span>
+<button class="font-label-sm text-label-sm text-secondary font-medium hover:underline flex items-center gap-0.5" id="toggle-corpus-btn" onclick="toggleCorpusList()">
+<span id="toggle-corpus-text">Colapsar lista</span>
+<span class="material-symbols-outlined text-[16px]" id="toggle-corpus-icon">expand_less</span>
+</button>
+</div>
+<div class="flex flex-col gap-space-xs max-h-72 overflow-y-auto pr-1" id="corpus-list-container">
+<!-- Doc 1 -->
+<article class="p-space-sm bg-surface-container-low rounded-lg hover:bg-surface-container transition-colors flex flex-col gap-space-xs border border-surface-container/40 dark:border-slate-800">
+<div class="flex items-start justify-between gap-space-xs">
+<h3 class="font-label-lg text-label-lg font-semibold text-on-surface line-clamp-1">Algorithmic Discrimination in Emergency Triage Protocol: A Biostatistical Audit</h3>
+<span class="font-label-sm text-label-sm px-1.5 py-0.5 bg-secondary-container text-on-secondary-container rounded font-mono font-bold flex-shrink-0">PDF</span>
+</div>
+<div class="flex items-center justify-between font-label-sm text-label-sm text-on-surface-variant">
+<span class="truncate">Vásquez-Pérez, M. et al. (2024)</span>
+<span class="font-mono flex-shrink-0">1.8 MB · Indexado</span>
+</div>
+</article>
+<!-- Doc 2 -->
+<article class="p-space-sm bg-surface-container-low rounded-lg hover:bg-surface-container transition-colors flex flex-col gap-space-xs border border-surface-container/40 dark:border-slate-800">
+<div class="flex items-start justify-between gap-space-xs">
+<h3 class="font-label-lg text-label-lg font-semibold text-on-surface line-clamp-1">Accountability Frameworks for Clinical Deep Neural Networks</h3>
+<span class="font-label-sm text-label-sm px-1.5 py-0.5 bg-secondary-container text-on-secondary-container rounded font-mono font-bold flex-shrink-0">PDF</span>
+</div>
+<div class="flex items-center justify-between font-label-sm text-label-sm text-on-surface-variant">
+<span class="truncate">García-Moreno &amp; Stein (2023)</span>
+<span class="font-mono flex-shrink-0">840 KB · Indexado</span>
+</div>
+</article>
+<!-- Doc 3 -->
+<article class="p-space-sm bg-surface-container-low rounded-lg hover:bg-surface-container transition-colors flex flex-col gap-space-xs border border-surface-container/40 dark:border-slate-800">
+<div class="flex items-start justify-between gap-space-xs">
+<h3 class="font-label-lg text-label-lg font-semibold text-on-surface line-clamp-1">Socio-Technical Biases in Automated Intensive Care Scoring</h3>
+<span class="font-label-sm text-label-sm px-1.5 py-0.5 bg-secondary-container text-on-secondary-container rounded font-mono font-bold flex-shrink-0">PDF</span>
+</div>
+<div class="flex items-center justify-between font-label-sm text-label-sm text-on-surface-variant">
+<span class="truncate">Thornton, K. &amp; Dubois (2023)</span>
+<span class="font-mono flex-shrink-0">3.2 MB · Indexado</span>
+</div>
+</article>
+<!-- Doc 4 -->
+<article class="p-space-sm bg-surface-container-low rounded-lg hover:bg-surface-container transition-colors flex flex-col gap-space-xs border border-surface-container/40 dark:border-slate-800">
+<div class="flex items-start justify-between gap-space-xs">
+<h3 class="font-label-lg text-label-lg font-semibold text-on-surface line-clamp-1">Epistemic Opacity in Diagnostic Decision Support Systems</h3>
+<span class="font-label-sm text-label-sm px-1.5 py-0.5 bg-secondary-container text-on-secondary-container rounded font-mono font-bold flex-shrink-0">PDF</span>
+</div>
+<div class="flex items-center justify-between font-label-sm text-label-sm text-on-surface-variant">
+<span class="truncate">Al-Mansoor, Z. (2022)</span>
+<span class="font-mono flex-shrink-0">2.1 MB · Indexado</span>
+</div>
+</article>
+</div>
+</div>
+</div>
+</section>
+</div>
+<!-- ==========================================
+     VISTA 2: CONFIGURACIÓN DEL ANÁLISIS
+     ========================================== -->
+<div class="tab-view hidden flex flex-col gap-space-md px-margin" id="view-config">
+<div class="bg-surface-container-lowest border border-surface-container/60 dark:border-slate-800 rounded-2xl p-space-md shadow-sm flex flex-col gap-space-md">
+<div class="flex items-center justify-between">
+<div>
+<span class="font-label-sm text-label-sm uppercase font-semibold text-primary">Afinación Algorítmica</span>
+<h2 class="font-headline-sm text-headline-sm font-semibold text-on-surface">Configuración del Análisis</h2>
+</div>
+<span class="material-symbols-outlined text-secondary text-[24px]">tune</span>
+</div>
+<form class="flex flex-col gap-space-md" onsubmit="handleExecuteMining(event)">
+<!-- Control Deslizante: Umbral de Relevancia Semántica -->
+<div class="flex flex-col gap-space-xs p-space-sm bg-surface-container-low rounded-xl">
+<div class="flex items-center justify-between">
+<label class="font-label-md text-label-md text-on-surface font-medium" for="relevance-slider">Umbral de relevancia semántica</label>
+<div class="flex items-center gap-1 font-mono text-primary font-bold text-label-md">
+<span id="slider-val-decimal">0.75</span>
+<span class="text-on-surface-variant font-normal">/</span>
+<span id="slider-val-percent">75%</span>
+</div>
+</div>
+<input class="w-full accent-primary-container cursor-pointer h-2 bg-surface-container dark:bg-slate-700 rounded-lg my-1" id="relevance-slider" max="0.95" min="0.50" oninput="updateSliderValues(this.value)" step="0.01" type="range" value="0.75"/>
+<div class="flex justify-between font-label-sm text-label-sm text-on-surface-variant">
+<span>0.50 (Exploratorio amplio)</span>
+<span>0.95 (Alta precisión estricta)</span>
+</div>
+</div>
+<!-- Mínimo de Resultados a Listar -->
+<div class="flex flex-col gap-space-xs p-space-sm bg-surface-container-low rounded-xl">
+<label class="font-label-md text-label-md text-on-surface font-medium" for="min-results-input">Mínimo de documentos a clasificar</label>
+<div class="flex items-center gap-space-sm">
+<input class="w-24 bg-surface-container-lowest text-on-surface font-mono font-semibold text-body-md rounded-xl p-space-sm border border-surface-container dark:border-slate-700 focus:outline-none focus:ring-1 focus:ring-primary" id="min-results-input" max="50" min="5" type="number" value="15"/>
+<span class="font-body-sm text-body-sm text-on-surface-variant">Documentos candidatos prioritarios en el ranking final</span>
+</div>
+</div>
+<!-- Checkbox / Switch para Informe Automático -->
+<label class="flex items-center gap-space-sm cursor-pointer p-space-sm rounded-xl bg-surface-container-low hover:bg-surface-container transition-colors">
+<input checked="" class="w-5 h-5 accent-primary-container rounded cursor-pointer" id="auto-report-chk" type="checkbox"/>
+<span class="font-label-md text-label-md text-on-surface font-medium">Generar informe estructurado automáticamente al culminar el pipeline</span>
+</label>
+<!-- Botón Primario de Ejecución -->
+<button class="w-full py-3.5 px-space-lg bg-primary-container hover:bg-secondary text-on-primary rounded-xl font-headline-sm text-headline-sm flex items-center justify-center gap-space-sm shadow-md active:scale-[0.99] transition-all" id="btn-execute-mining" type="submit">
+<span class="material-symbols-outlined text-[24px]" id="btn-mining-icon">manage_search</span>
+<span id="btn-mining-text">Ejecutar Minería de Documentos</span>
+</button>
+</form>
+</div>
+</div>
+<!-- ==========================================
+     VISTA 3: HISTORIAL DE SESIONES
+     ========================================== -->
+<div class="tab-view hidden flex flex-col gap-space-md px-margin" id="view-sesiones">
+<div class="bg-surface-container-lowest border border-surface-container/60 dark:border-slate-800 rounded-2xl p-space-md shadow-sm flex flex-col gap-space-md">
+<div class="flex items-center justify-between">
+<div>
+<span class="font-label-sm text-label-sm uppercase font-semibold text-secondary">Registro de Auditoría</span>
+<h2 class="font-headline-sm text-headline-sm font-semibold text-on-surface">Sesiones Anteriores</h2>
+</div>
+<!-- Botón para alternar a estado vacío -->
+<button class="font-label-sm text-label-sm text-on-surface-variant hover:text-secondary underline decoration-dotted" id="btn-toggle-empty-sessions" onclick="toggleEmptySessions()">
+      Ver estado vacío
+    </button>
+</div>
+<!-- Lista con Historial -->
+<div class="flex flex-col gap-space-sm" id="sessions-populated">
+<!-- Sesión 1 -->
+<article class="p-space-sm bg-surface-container-low border border-surface-container/60 dark:border-slate-800 rounded-xl flex flex-col gap-space-xs" id="session-card-1">
+<div class="flex items-start justify-between gap-space-xs">
+<div class="flex flex-col min-w-0">
+<span class="font-label-sm text-label-sm text-on-surface-variant font-mono">18 Oct 2024 · 11:24 AM</span>
+<h3 class="font-label-lg text-label-lg font-semibold text-on-surface truncate">"impacto ético y sesgos algorítmicos en triaje clínico"</h3>
+</div>
+<span class="font-label-sm text-label-sm px-1.5 py-0.5 rounded bg-surface-container text-primary font-mono flex-shrink-0">18 docs</span>
+</div>
+<div class="font-body-sm text-body-sm text-on-surface-variant">
+      Carpeta: <span class="font-mono text-on-surface">Inteligencia Artificial y Ética Biomédica</span>
+</div>
+<!-- Acciones Visibles e Inmediatas -->
+<div class="flex items-center justify-between pt-space-xs mt-space-xs border-t border-surface-container/50 dark:border-slate-800">
+<button class="inline-flex items-center gap-1 font-label-md text-label-md text-primary font-semibold hover:text-secondary transition-colors" onclick="restoreSession('Sesión 18-Oct')">
+<span class="material-symbols-outlined text-[18px]">restore_page</span>
+<span>Restaurar sesión</span>
+</button>
+<button class="inline-flex items-center gap-1 font-label-md text-label-md text-error hover:bg-error-container/20 px-space-xs py-0.5 rounded transition-colors" onclick="deleteSession('session-card-1')" title="Confirmar eliminación permanente">
+<span class="material-symbols-outlined text-[18px]">delete_sweep</span>
+<span>Eliminar</span>
+</button>
+</div>
+</article>
+<!-- Sesión 2 -->
+<article class="p-space-sm bg-surface-container-low border border-surface-container/60 dark:border-slate-800 rounded-xl flex flex-col gap-space-xs" id="session-card-2">
+<div class="flex items-start justify-between gap-space-xs">
+<div class="flex flex-col min-w-0">
+<span class="font-label-sm text-label-sm text-on-surface-variant font-mono">15 Oct 2024 · 16:40 PM</span>
+<h3 class="font-label-lg text-label-lg font-semibold text-on-surface truncate">"modelos predictivos en triaje intensivo pediátrico"</h3>
+</div>
+<span class="font-label-sm text-label-sm px-1.5 py-0.5 rounded bg-surface-container text-primary font-mono flex-shrink-0">12 docs</span>
+</div>
+<div class="font-body-sm text-body-sm text-on-surface-variant">
+      Carpeta: <span class="font-mono text-on-surface">Políticas Públicas de Salud</span>
+</div>
+<div class="flex items-center justify-between pt-space-xs mt-space-xs border-t border-surface-container/50 dark:border-slate-800">
+<button class="inline-flex items-center gap-1 font-label-md text-label-md text-primary font-semibold hover:text-secondary transition-colors" onclick="restoreSession('Sesión 15-Oct')">
+<span class="material-symbols-outlined text-[18px]">restore_page</span>
+<span>Restaurar sesión</span>
+</button>
+<button class="inline-flex items-center gap-1 font-label-md text-label-md text-error hover:bg-error-container/20 px-space-xs py-0.5 rounded transition-colors" onclick="deleteSession('session-card-2')">
+<span class="material-symbols-outlined text-[18px]">delete_sweep</span>
+<span>Eliminar</span>
+</button>
+</div>
+</article>
+</div>
+<!-- Estado Vacío (Ocultable) -->
+<div class="hidden p-space-lg bg-surface-container-low rounded-xl text-center flex flex-col items-center justify-center gap-space-xs border border-dashed border-outline-variant" id="sessions-empty">
+<span class="material-symbols-outlined text-[36px] text-on-surface-variant">history_toggle_off</span>
+<h3 class="font-headline-sm text-headline-sm font-semibold text-on-surface">Sin sesiones previas archivadas</h3>
+<p class="font-body-sm text-body-sm text-on-surface-variant max-w-xs">Ejecute una nueva consulta semántica sobre el corpus para generar un punto de control y recuperar resultados futuros.</p>
+<button class="mt-space-xs font-label-md text-label-md text-primary font-semibold hover:underline" onclick="toggleEmptySessions()">Recuperar historial simulado</button>
+</div>
+</div>
+</div>
+<!-- ==========================================
+     VISTA 4: INFORME DE EVIDENCIA CIENTÍFICA
+     ========================================== -->
+<div class="tab-view hidden flex flex-col gap-space-md px-margin" id="view-informe">
+<!-- Encabezado de Informe y Acciones de Exportación -->
+<div class="bg-surface-container-lowest border border-surface-container/60 dark:border-slate-800 rounded-2xl p-space-md shadow-sm flex flex-col gap-space-md">
+<div class="flex flex-col gap-space-xs">
+<div class="flex items-center gap-space-xs text-primary font-label-sm text-label-sm font-semibold uppercase">
+<span class="material-symbols-outlined text-[18px]">article</span>
+<span>Informe Técnico de Minería Documental</span>
+</div>
+<h2 class="font-headline-lg text-headline-lg font-semibold text-on-surface">Síntesis Analítica de Evidencia</h2>
+</div>
+<!-- Metadatos de la Consulta -->
+<div class="p-space-sm bg-surface-container-low rounded-lg flex flex-col gap-space-xs border border-surface-container/40 dark:border-slate-800">
+<div>
+<span class="font-label-sm text-label-sm text-on-surface-variant font-mono uppercase block">Consulta Utilizada:</span>
+<p class="font-body-md text-body-md text-on-surface font-semibold">"impacto ético y sesgos algorítmicos en triaje clínico automatizado"</p>
+</div>
+<div>
+<span class="font-label-sm text-label-sm text-on-surface-variant font-mono uppercase block">Metodología:</span>
+<p class="font-body-sm text-body-sm text-on-surface">TF-IDF ponderado con similitud coseno sobre embeddings BERT-PubMed y clustering LDA de 5 tópicos (convergencia iterativa a 500 épocas).</p>
+</div>
+</div>
+<!-- Barra de Acciones de Exportación -->
+<div class="flex flex-wrap gap-space-xs pt-space-xs">
+<!-- Botón Guardar PDF (Estilo preparado para Print) -->
+<button class="flex-1 min-w-[130px] py-space-sm px-space-xs bg-primary text-on-primary font-label-md text-label-md rounded-lg flex items-center justify-center gap-1 shadow-sm hover:opacity-90 transition-colors" onclick="window.print()" title="Exportar documento legible para publicación">
+<span class="material-symbols-outlined text-[18px]">picture_as_pdf</span>
+<span>Guardar como PDF</span>
+</button>
+<!-- Botón Descargar LaTeX -->
+<button class="flex-1 min-w-[130px] py-space-sm px-space-xs bg-surface-container text-on-surface font-label-md text-label-md rounded-lg flex items-center justify-center gap-1 hover:bg-surface-container-high transition-colors" onclick="triggerDownloadNotification('LaTeX (.tex)')" title="Archivo fuente para Overleaf / TeXStudio">
+<span class="material-symbols-outlined text-[18px]">code</span>
+<span>Descargar LaTeX</span>
+</button>
+<!-- Botón Descargar CSV -->
+<button class="flex-1 min-w-[110px] py-space-sm px-space-xs bg-surface-container text-on-surface font-label-md text-label-md rounded-lg flex items-center justify-center gap-1 hover:bg-surface-container-high transition-colors" onclick="triggerDownloadNotification('Datos (.csv)')" title="Tabla de datos tabular cruda">
+<span class="material-symbols-outlined text-[18px]">table_view</span>
+<span>CSV (.csv)</span>
+</button>
+</div>
+</div>
+<!-- Gráfico de Dispersión SVG: Relevancia vs. Novedad Temática -->
+<div class="bg-surface-container-lowest border border-surface-container/60 dark:border-slate-800 rounded-2xl p-space-md shadow-sm flex flex-col gap-space-xs">
+<div class="flex items-center justify-between">
+<h3 class="font-headline-sm text-headline-sm font-semibold text-on-surface">Distribución: Relevancia vs. Novedad Temática</h3>
+<span class="font-label-sm text-label-sm text-on-surface-variant font-mono">N=18</span>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant">Cuadrante superior-derecho identifica evidencia atípica de alta pertinencia epistémica.</p>
+<!-- SVG Chart nítido y responsive -->
+<div class="w-full bg-surface-container-low rounded-lg p-space-xs mt-space-xs overflow-hidden border border-surface-container/40 dark:border-slate-800">
+<svg aria-label="Gráfico de dispersión de relevancia semántica frente a novedad temática" class="w-full h-auto font-mono text-[10px]" viewbox="0 0 340 220">
+<!-- Fondo de cuadrícula sutil -->
+<line stroke="#dae2fd" stroke-dasharray="2 2" stroke-width="1" x1="45" x2="320" y1="25" y2="25"></line>
+<line stroke="#dae2fd" stroke-dasharray="2 2" stroke-width="1" x1="45" x2="320" y1="75" y2="75"></line>
+<line stroke="#dae2fd" stroke-dasharray="2 2" stroke-width="1" x1="45" x2="320" y1="125" y2="125"></line>
+<line stroke="#dae2fd" stroke-width="1.5" x1="45" x2="320" y1="175" y2="175"></line>
+<line stroke="#dae2fd" stroke-width="1.5" x1="45" x2="45" y1="25" y2="175"></line>
+<line stroke="#dae2fd" stroke-dasharray="2 2" stroke-width="1" x1="135" x2="135" y1="25" y2="175"></line>
+<line stroke="#dae2fd" stroke-dasharray="2 2" stroke-width="1" x1="225" x2="225" y1="25" y2="175"></line>
+<line stroke="#dae2fd" stroke-dasharray="2 2" stroke-width="1" x1="320" x2="320" y1="25" y2="175"></line>
+<!-- Zona de Alta Prioridad (Highlight) -->
+<rect fill="#99efe5" fill-opacity="0.2" height="75" width="140" x="180" y="25"></rect>
+<text fill="#006a63" font-size="9" font-weight="600" x="185" y="38">Alta Relevancia + Novedad</text>
+<!-- Puntos del Cluster 1: Sesgo Algorítmico -->
+<circle cx="280" cy="45" fill="#134e4a" r="6" stroke="#ffffff" stroke-width="1.5"></circle>
+<text fill="#131b2e" font-size="9" font-weight="600" x="288" y="48">D-01 (0.94)</text>
+<circle cx="260" cy="60" fill="#134e4a" r="5" stroke="#ffffff" stroke-width="1.5"></circle>
+<text fill="#131b2e" font-size="9" x="268" y="63">D-02 (0.91)</text>
+<circle cx="220" cy="55" fill="#134e4a" r="5.5" stroke="#ffffff" stroke-width="1.5"></circle>
+<circle cx="240" cy="85" fill="#134e4a" r="4.5" stroke="#ffffff" stroke-width="1.5"></circle>
+<!-- Puntos del Cluster 2: Epistemología y Validación -->
+<circle cx="160" cy="90" fill="#006a63" r="5" stroke="#ffffff" stroke-width="1.5"></circle>
+<circle cx="140" cy="115" fill="#006a63" r="5.5" stroke="#ffffff" stroke-width="1.5"></circle>
+<circle cx="195" cy="110" fill="#006a63" r="4" stroke="#ffffff" stroke-width="1.5"></circle>
+<circle cx="120" cy="130" fill="#006a63" r="4.5" stroke="#ffffff" stroke-width="1.5"></circle>
+<!-- Puntos Periféricos / Menor afinidad -->
+<circle cx="80" cy="145" fill="#707977" r="4"></circle>
+<circle cx="95" cy="160" fill="#707977" r="3.5"></circle>
+<circle cx="65" cy="155" fill="#707977" r="3.5"></circle>
+<!-- Rotulación de Ejes -->
+<text fill="#404847" text-anchor="middle" x="45" y="195">0.0</text>
+<text fill="#404847" text-anchor="middle" x="182" y="195">0.50</text>
+<text fill="#404847" text-anchor="middle" x="320" y="195">1.0</text>
+<text fill="#131b2e" font-weight="600" text-anchor="middle" x="182" y="212">Novedad Temática (Divergencia KL)</text>
+<text fill="#404847" text-anchor="end" x="38" y="178">0.5</text>
+<text fill="#404847" text-anchor="end" x="38" y="105">0.75</text>
+<text fill="#404847" text-anchor="end" x="38" y="30">1.0</text>
+<text fill="#131b2e" font-weight="600" text-anchor="middle" transform="rotate(-90 12,100)" x="12" y="100">Relevancia</text>
+</svg>
+</div>
+<!-- Leyenda del Gráfico -->
+<div class="flex items-center justify-center gap-space-md pt-space-xs font-label-sm text-label-sm text-on-surface-variant">
+<div class="flex items-center gap-1">
+<span class="w-3 h-3 rounded-full bg-primary-container"></span>
+<span>Cluster A: Sesgo y Disparidad</span>
+</div>
+<div class="flex items-center gap-1">
+<span class="w-3 h-3 rounded-full bg-secondary"></span>
+<span>Cluster B: Opacidad Epistémica</span>
+</div>
+</div>
+</div>
+<!-- Tabla Escaneable de Documentos Relevantes -->
+<div class="bg-surface-container-lowest border border-surface-container/60 dark:border-slate-800 rounded-2xl p-space-md shadow-sm flex flex-col gap-space-xs">
+<div class="flex items-center justify-between">
+<h3 class="font-headline-sm text-headline-sm font-semibold text-on-surface">Jerarquía de Documentos Relevantes</h3>
+<span class="font-label-sm text-label-sm text-secondary font-mono">TOP 3 RANKING</span>
+</div>
+<!-- Tabla Responsive en Formato Bloque Escaneable -->
+<div class="overflow-x-auto -mx-space-md px-space-md">
+<table class="w-full text-left font-body-sm text-body-sm">
+<thead>
+<tr class="bg-surface-container-low text-on-surface font-label-sm text-label-sm uppercase font-mono">
+<th class="p-space-xs" scope="col">Documento / Título</th>
+<th class="p-space-xs text-center" scope="col">Score</th>
+<th class="p-space-xs text-center" scope="col">Citas</th>
+<th class="p-space-xs" scope="col">Evidencia Clave</th>
+</tr>
+</thead>
+<tbody class="divide-none">
+<!-- Fila 1 -->
+<tr class="hover:bg-surface-container-low transition-colors border-b border-surface-container/40 dark:border-slate-800">
+<td class="p-space-xs align-top">
+<span class="font-label-md text-label-md font-semibold text-on-surface block">Algorithmic Discrimination in Emergency Triage Protocol</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant">Vásquez-Pérez et al. (2024)</span>
+</td>
+<td class="p-space-xs align-top text-center font-mono font-bold text-primary">0.94</td>
+<td class="p-space-xs align-top text-center font-mono text-on-surface-variant">42</td>
+<td class="p-space-xs align-top text-on-surface-variant">Disparidad sistemática del 14% en priorización de camas críticas.</td>
+</tr>
+<!-- Fila 2 -->
+<tr class="hover:bg-surface-container-low transition-colors border-b border-surface-container/40 dark:border-slate-800">
+<td class="p-space-xs align-top">
+<span class="font-label-md text-label-md font-semibold text-on-surface block">Accountability Frameworks for Clinical Deep Neural Networks</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant">García-Moreno &amp; Stein (2023)</span>
+</td>
+<td class="p-space-xs align-top text-center font-mono font-bold text-primary">0.88</td>
+<td class="p-space-xs align-top text-center font-mono text-on-surface-variant">89</td>
+<td class="p-space-xs align-top text-on-surface-variant">Incompatibilidad de cajas negras con el estándar de consentimiento informado.</td>
+</tr>
+<!-- Fila 3 -->
+<tr class="hover:bg-surface-container-low transition-colors">
+<td class="p-space-xs align-top">
+<span class="font-label-md text-label-md font-semibold text-on-surface block">Socio-Technical Biases in Automated Intensive Care Scoring</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant">Thornton &amp; Dubois (2023)</span>
+</td>
+<td class="p-space-xs align-top text-center font-mono font-bold text-primary">0.82</td>
+<td class="p-space-xs align-top text-center font-mono text-on-surface-variant">15</td>
+<td class="p-space-xs align-top text-on-surface-variant">Sesgo de subestimación de dolor en colectivos demográficamente vulnerables.</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<!-- Fragmento de Evidencia Contextual Extraída (Callout) -->
+<div class="bg-surface-container-lowest border border-surface-container/60 dark:border-slate-800 rounded-2xl p-space-md shadow-sm flex flex-col gap-space-xs">
+<div class="flex items-center gap-space-xs text-primary">
+<span class="material-symbols-outlined text-[20px]">format_quote</span>
+<span class="font-label-md text-label-md font-semibold">Cita Textual Verificada por Match Vectorial</span>
+</div>
+<!-- Cita Estilizada con Alto Contraste -->
+<blockquote class="p-space-md bg-surface-container-low rounded-xl font-headline-md text-headline-md text-primary italic leading-relaxed border-l-4 border-primary">
+    «Los algoritmos de asignación demostraron una disparidad del 14% en la priorización de pacientes según variables demográficas latentes, amplificando el tiempo de espera en admisiones críticas.»
+  </blockquote>
+<div class="flex items-center justify-between font-label-sm text-label-sm text-on-surface-variant font-mono">
+<span>Fuente: Vasquez_Perez_2024.pdf</span>
+<span class="font-semibold text-secondary">Pág. 12, Párrafo 3 (Similitud: 96.8%)</span>
+</div>
+</div>
+<!-- Conclusiones y Siguientes Pasos -->
+<div class="bg-surface-container-lowest border border-surface-container/60 dark:border-slate-800 rounded-2xl p-space-md shadow-sm flex flex-col gap-space-sm">
+<div class="flex items-center gap-space-xs text-secondary font-semibold">
+<span class="material-symbols-outlined text-[20px]">insights</span>
+<h3 class="font-headline-sm text-headline-sm text-on-surface">Conclusiones Sintetizadas &amp; Siguientes Pasos</h3>
+</div>
+<ol class="flex flex-col gap-space-sm font-body-sm text-body-sm text-on-surface list-decimal list-inside">
+<li class="pl-space-xs">
+<strong>Validación de Sesgo Confirmada:</strong> 72% de la literatura analizada converge en que los modelos entrenados con datasets retrospectivos de triaje penalizan severamente poblaciones minoritarias si no media calibración adversaria.
+    </li>
+<li class="pl-space-xs">
+<strong>Carencia de Auditorías Externas:</strong> Menos del 8% de los hospitales evaluados en las muestras publican métricas de equidad desagregadas por cohorte socioeconómica.
+    </li>
+<li class="pl-space-xs">
+<strong>Próximo Paso Investigativo:</strong> Ampliar la consulta semántica incorporando la cohorte 'Medicina Basada en Evidencia vs. Redes Convolucionales' y exportar la matriz de confusión en formato LaTeX para el paper en desarrollo.
+    </li>
+</ol>
+</div>
+</div>
+</div>
+</main>
+<!-- Barra Inferior de Navegación en Sincronía con las Pestañas -->
+<nav class="fixed bottom-0 w-full z-50 pb-safe bg-surface/90 dark:bg-[#0b1319]/90 backdrop-blur-xl border-t border-surface-container dark:border-slate-800 shadow-[0_-1px_8px_rgba(0,0,0,0.04)]">
+<div class="grid grid-cols-4 items-center h-16 px-space-xs">
+<button class="nav-bottom-item flex flex-col items-center justify-center h-full rounded-lg text-primary font-semibold transition-colors" data-tab="ingesta" onclick="setActiveTab('ingesta')">
+<span class="material-symbols-outlined text-[20px]">folder_special</span>
+<span class="font-label-sm text-label-sm tracking-tight truncate max-w-[80px]">Ingesta</span>
+</button>
+<button class="nav-bottom-item flex flex-col items-center justify-center h-full rounded-lg text-on-surface-variant hover:text-on-surface transition-colors" data-tab="config" onclick="setActiveTab('config')">
+<span class="material-symbols-outlined text-[20px]">tune</span>
+<span class="font-label-sm text-label-sm tracking-tight truncate max-w-[80px]">Ajustes</span>
+</button>
+<button class="nav-bottom-item flex flex-col items-center justify-center h-full rounded-lg text-on-surface-variant hover:text-on-surface transition-colors" data-tab="sesiones" onclick="setActiveTab('sesiones')">
+<span class="material-symbols-outlined text-[20px]">history</span>
+<span class="font-label-sm text-label-sm tracking-tight truncate max-w-[80px]">Sesiones</span>
+</button>
+<button class="nav-bottom-item flex flex-col items-center justify-center h-full rounded-lg text-on-surface-variant hover:text-on-surface transition-colors" data-tab="informe" onclick="setActiveTab('informe')">
+<span class="material-symbols-outlined text-[20px]">assessment</span>
+<span class="font-label-sm text-label-sm tracking-tight truncate max-w-[80px]">Informe</span>
+</button>
+</div>
+</nav>
+<script>
+  // Control de Modo Oscuro / Claro
+  function toggleTheme() {
+    const htmlEl = document.documentElement;
+    const isDark = htmlEl.classList.toggle('dark');
+    const themeIcon = document.getElementById('theme-icon');
+    if (isDark) {
+      themeIcon.innerText = 'light_mode';
+      localStorage.setItem('theme_mode', 'dark');
+    } else {
+      themeIcon.innerText = 'dark_mode';
+      localStorage.setItem('theme_mode', 'light');
+    }
+  }
+
+  // Comprobar preferencia guardada
+  if (localStorage.getItem('theme_mode') === 'dark' || 
+     (!localStorage.getItem('theme_mode') && window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+    document.documentElement.classList.add('dark');
+    const icon = document.getElementById('theme-icon');
+    if (icon) icon.innerText = 'light_mode';
+  }
+
+  // Cambio de Pestañas Principales (Tab system modular)
+  function setActiveTab(tabId) {
+    const views = ['ingesta', 'config', 'sesiones', 'informe'];
+    
+    // Alternar vistas
+    views.forEach(v => {
+      const viewEl = document.getElementById('view-' + v);
+      if (viewEl) {
+        if (v === tabId) {
+          viewEl.classList.remove('hidden');
+        } else {
+          viewEl.classList.add('hidden');
+        }
+      }
+    });
+
+    // Actualizar botones de navegación superior
+    const tabBtns = document.querySelectorAll('.main-tab-btn');
+    tabBtns.forEach(btn => {
+      const match = btn.getAttribute('data-tab') === tabId;
+      btn.setAttribute('aria-selected', match ? 'true' : 'false');
+      if (match) {
+        btn.className = 'main-tab-btn flex items-center gap-1.5 px-3 py-1.5 rounded-xl font-label-md text-label-md whitespace-nowrap transition-all font-semibold bg-primary text-on-primary shadow-sm';
+      } else {
+        btn.className = 'main-tab-btn flex items-center gap-1.5 px-3 py-1.5 rounded-xl font-label-md text-label-md whitespace-nowrap transition-all font-medium text-on-surface-variant hover:text-on-surface hover:bg-surface-container';
+      }
+    });
+
+    // Actualizar barra de navegación inferior
+    const bottomBtns = document.querySelectorAll('.nav-bottom-item');
+    bottomBtns.forEach(btn => {
+      const match = btn.getAttribute('data-tab') === tabId;
+      if (match) {
+        btn.className = 'nav-bottom-item flex flex-col items-center justify-center h-full rounded-lg text-primary font-semibold transition-colors';
+      } else {
+        btn.className = 'nav-bottom-item flex flex-col items-center justify-center h-full rounded-lg text-on-surface-variant hover:text-on-surface transition-colors';
+      }
+    });
+
+    // Desplazar arriba con suavidad
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  // Conmutador de estados del banner de ingesta
+  function switchState(state) {
+    const states = ['progress', 'success', 'error'];
+    states.forEach(s => {
+      const el = document.getElementById('state-' + s);
+      const btn = document.getElementById('tab-btn-' + s);
+      if (s === state) {
+        el.classList.remove('hidden');
+        btn.setAttribute('aria-selected', 'true');
+        btn.className = 'px-space-xs py-0.5 font-label-sm text-label-sm rounded bg-surface-container-highest text-primary font-semibold';
+      } else {
+        el.classList.add('hidden');
+        btn.setAttribute('aria-selected', 'false');
+        btn.className = 'px-space-xs py-0.5 font-label-sm text-label-sm rounded bg-surface-container text-on-surface-variant hover:text-on-surface font-medium';
+      }
+    });
+  }
+
+  // Desplegable de corpus de documentos
+  function toggleCorpusList() {
+    const container = document.getElementById('corpus-list-container');
+    const text = document.getElementById('toggle-corpus-text');
+    const icon = document.getElementById('toggle-corpus-icon');
+    
+    if (container.classList.contains('hidden')) {
+      container.classList.remove('hidden');
+      text.innerText = 'Colapsar lista';
+      icon.innerText = 'expand_less';
+    } else {
+      container.classList.add('hidden');
+      text.innerText = 'Expandir lista';
+      icon.innerText = 'expand_more';
+    }
+  }
+
+  // Sincronización del slider con los indicadores numéricos
+  function updateSliderValues(val) {
+    const decimal = parseFloat(val).toFixed(2);
+    const percent = Math.round(parseFloat(val) * 100) + '%';
+    document.getElementById('slider-val-decimal').innerText = decimal;
+    document.getElementById('slider-val-percent').innerText = percent;
+  }
+
+  // Simulación de ejecución de minería
+  function handleExecuteMining(e) {
+    e.preventDefault();
+    const btn = document.getElementById('btn-execute-mining');
+    const icon = document.getElementById('btn-mining-icon');
+    const text = document.getElementById('btn-mining-text');
+    
+    icon.classList.add('animate-spin');
+    icon.innerText = 'hourglass_top';
+    text.innerText = 'Indexando Embeddings y Clustering...';
+    btn.disabled = true;
+
+    setTimeout(() => {
+      icon.classList.remove('animate-spin');
+      icon.innerText = 'task_alt';
+      text.innerText = '¡Minería Completada! Abriendo Informe...';
+      
+      setTimeout(() => {
+        icon.innerText = 'manage_search';
+        text.innerText = 'Ejecutar Minería de Documentos';
+        btn.disabled = false;
+        // Navegar automáticamente a la pestaña Informe tras ejecutar
+        setActiveTab('informe');
+      }, 1200);
+    }, 1600);
+  }
+
+  // Alternar entre historial poblado y estado vacío
+  function toggleEmptySessions() {
+    const populated = document.getElementById('sessions-populated');
+    const empty = document.getElementById('sessions-empty');
+    const toggleBtn = document.getElementById('btn-toggle-empty-sessions');
+    
+    if (populated.classList.contains('hidden')) {
+      populated.classList.remove('hidden');
+      empty.classList.add('hidden');
+      toggleBtn.innerText = 'Ver estado vacío';
+    } else {
+      populated.classList.add('hidden');
+      empty.classList.remove('hidden');
+      toggleBtn.innerText = 'Ver con datos';
+    }
+  }
+
+  // Acciones sobre tarjetas de sesión
+  function restoreSession(sessionName) {
+    alert(`[LAB] Restaurando parámetros, corpus y pesos para: ${sessionName}`);
+    setActiveTab('informe');
+  }
+
+  function deleteSession(cardId) {
+    const card = document.getElementById(cardId);
+    if (card) {
+      if (confirm('¿Desea desvincular esta sesión y purgar sus vectores asociados del disco?')) {
+        card.style.opacity = '0.3';
+        setTimeout(() => {
+          card.remove();
+          const remaining = document.querySelectorAll('#sessions-populated article');
+          if (remaining.length === 0) {
+            toggleEmptySessions();
+          }
+        }, 300);
+      }
+    }
+  }
+
+  // Feedback de descarga
+  function triggerDownloadNotification(fileType) {
+    alert(`[COMPILADOR] Generando bundle descargable: ${fileType}. El archivo se estructurará siguiendo los estándares APA 7ma / ACM.`);
+  }
+</script>
+</body></html>
