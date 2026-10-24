@@ -45,6 +45,9 @@ function App() {
   const [minimum, setMinimum] = useState(5)
   const [compilePdf, setCompilePdf] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
+  const [analysisStatus, setAnalysisStatus] = useState('')
+  const [analysisStartedAt, setAnalysisStartedAt] = useState(0)
+  const [analysisElapsedSeconds, setAnalysisElapsedSeconds] = useState(0)
   const [error, setError] = useState('')
   const [result, setResult] = useState(null)
   const [selectedReportIndex, setSelectedReportIndex] = useState(0)
@@ -121,6 +124,22 @@ function App() {
 
     return () => { active = false }
   }, [selectedTopic])
+
+  useEffect(() => {
+    if (!isLoading || !analysisStartedAt) return undefined
+    const timer = window.setInterval(() => {
+      setAnalysisElapsedSeconds(Math.floor((Date.now() - analysisStartedAt) / 1000))
+    }, 1000)
+    return () => window.clearInterval(timer)
+  }, [isLoading, analysisStartedAt])
+
+  useEffect(() => {
+    if (!isLoading || !analysisStartedAt) return undefined
+    const timer = window.setInterval(() => {
+      setAnalysisElapsedSeconds(Math.floor((Date.now() - analysisStartedAt) / 1000))
+    }, 1000)
+    return () => window.clearInterval(timer)
+  }, [isLoading, analysisStartedAt])
 
   const handleFiles = (fileList) => {
     const selected = Array.from(fileList).filter((file) =>
@@ -247,6 +266,9 @@ function App() {
     }
 
     setIsLoading(true)
+    setAnalysisStatus('Enviando solicitud al servidor…')
+    setAnalysisStartedAt(Date.now())
+    setAnalysisElapsedSeconds(0)
     setError('')
     setResult(null)
 
@@ -258,22 +280,47 @@ function App() {
     if (selectedTopic) formData.append('tema', selectedTopic)
 
     try {
-      const response = await apiFetch('/api/analyze', {
+      const response = await apiFetch('/api/analyze/jobs', {
         method: 'POST',
         body: formData,
       })
-      const payload = await response.json()
+      const accepted = await response.json()
       if (!response.ok) {
-        throw new Error(payload.detail || 'La solicitud no pudo procesarse.')
+        throw new Error(accepted.detail || 'Render no pudo iniciar el análisis.')
+      }
+
+      const deadline = Date.now() + 15 * 60 * 1000
+      let payload
+      while (Date.now() < deadline) {
+        await new Promise((resolve) => window.setTimeout(resolve, 1800))
+        const statusResponse = await apiFetch(`/api/analyze/jobs/${accepted.job_id}`)
+        const status = await statusResponse.json()
+        if (!statusResponse.ok) {
+          throw new Error(status.detail || 'No se pudo consultar el estado del análisis.')
+        }
+        if (status.status === 'completed') {
+          payload = status.result
+          break
+        }
+        if (status.status === 'failed') {
+          throw new Error(status.error || 'El análisis falló en el servidor.')
+        }
+        setAnalysisStatus(status.message || 'Procesando documentos y calculando resultados…')
+      }
+      if (!payload) {
+        throw new Error('El análisis sigue tardando más de 15 minutos. Revisa las sesiones antes de iniciar otro para evitar duplicarlo.')
       }
       setResult(payload)
       setSelectedReportIndex(0)
       setActiveTab('informe')
       loadSessions()
     } catch (requestError) {
-      setError(requestError.message)
+      setError(requestError instanceof TypeError
+        ? 'Se perdió la conexión con Render mientras se consultaba el trabajo. Revisa las sesiones antes de reintentar para evitar duplicar el análisis.'
+        : requestError.message)
     } finally {
       setIsLoading(false)
+      setAnalysisStatus('')
     }
   }
 
@@ -600,6 +647,16 @@ function App() {
           <button className="primary-button" disabled={isLoading || (!documents.length && !topicDocuments.length)} onClick={runAnalysis}>
             {isLoading ? 'Procesando…' : documents.length ? 'Analizar documentos seleccionados' : 'Analizar carpeta del tema'}
           </button>
+          {isLoading && (
+            <div className="analysis-progress" role="status" aria-live="polite">
+              <span className="analysis-spinner material-symbols-outlined" aria-hidden="true">progress_activity</span>
+              <div>
+                <strong>Analizando {selectedTopic || 'todos los temas'}</strong>
+                <p>{analysisStatus || `Extrayendo texto, calculando relevancia y preparando gráficos e informe para ${documents.length || topicDocuments.length} documento(s).`}</p>
+                <span className="analysis-elapsed">Tiempo transcurrido: {Math.floor(analysisElapsedSeconds / 60)}:{String(analysisElapsedSeconds % 60).padStart(2, '0')}</span>
+              </div>
+            </div>
+          )}
         </div>
       </section>
 

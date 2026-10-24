@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import asyncio
+import io
 import json
 import os
 import re
@@ -11,7 +12,7 @@ from pathlib import Path, PurePosixPath
 from typing import Annotated
 from urllib.parse import quote, unquote
 
-from fastapi import FastAPI, File, Form, HTTPException, UploadFile
+from fastapi import BackgroundTasks, FastAPI, File, Form, HTTPException, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
@@ -23,6 +24,7 @@ import queries
 BASE_DIR = Path(__file__).resolve().parent
 DATA_DIR = Path(os.environ.get("APP_DATA_DIR", BASE_DIR)).expanduser()
 ARTIFACTS_DIR = DATA_DIR / "artifacts"
+JOBS_DIR = DATA_DIR / "jobs"
 DOCUMENTS_DIR = DATA_DIR / "documentos"
 DEFAULT_DOCUMENTS_DIR = BASE_DIR / "documentos"
 UPLOAD_LIMIT = 100 * 1024 * 1024
@@ -64,6 +66,7 @@ class AnalysisResult(BaseModel):
 
 
 ARTIFACTS_DIR.mkdir(parents=True, exist_ok=True)
+JOBS_DIR.mkdir(parents=True, exist_ok=True)
 if not DOCUMENTS_DIR.exists():
     if DEFAULT_DOCUMENTS_DIR.is_dir() and DOCUMENTS_DIR.resolve() != DEFAULT_DOCUMENTS_DIR.resolve():
         shutil.copytree(DEFAULT_DOCUMENTS_DIR, DOCUMENTS_DIR)
@@ -137,12 +140,58 @@ def _theme_directory(theme: str) -> Path | None:
     )
 
 
+def _resolve_topic_key(theme: str) -> str | None:
+    normalized = _normalize_theme_name(theme)
+    resolved = main._resolver_tema(normalized)
+    if resolved:
+        return resolved
+    for topic_key in queries.listar_temas():
+        if _normalize_theme_name(queries.titulo_tema(topic_key)) == normalized:
+            return topic_key
+    return None
+
+
 def _list_output_files(directory: Path, suffixes: set[str]) -> list[str]:
     return [
         str(path)
         for path in sorted(directory.iterdir())
         if path.is_file() and path.suffix.lower() in suffixes
     ]
+
+
+def _write_job_status(job_id: str, status: str, **details: object) -> None:
+    status_path = JOBS_DIR / f"{job_id}.json"
+    temporary_path = status_path.with_suffix(".tmp")
+    temporary_path.write_text(
+        json.dumps({"job_id": job_id, "status": status, **details}),
+        encoding="utf-8",
+    )
+    temporary_path.replace(status_path)
+
+
+async def _run_analysis_job(
+    job_id: str,
+    uploaded_files: list[tuple[str, bytes]],
+    umbral: float,
+    minimo: int,
+    sin_pdf: bool,
+    tema: str | None,
+) -> None:
+    _write_job_status(job_id, "processing", message="Preparando documentos y análisis.")
+    uploads = [UploadFile(filename=filename, file=io.BytesIO(content)) for filename, content in uploaded_files]
+    try:
+        result = await analyze(
+            files=uploads,
+            umbral=umbral,
+            minimo=minimo,
+            sin_pdf=sin_pdf,
+            tema=tema,
+        )
+        _write_job_status(job_id, "completed", result=result.model_dump())
+    except HTTPException as exc:
+        _write_job_status(job_id, "failed", error=str(exc.detail))
+    except Exception as exc:  # pragma: no cover - persisted for the polling client
+        _write_job_status(job_id, "failed", error=f"No se pudo analizar: {exc}")
 
 
 @app.get("/api/health")
@@ -342,6 +391,52 @@ def artifact(session_id: str, filename: str) -> FileResponse:
     return FileResponse(file_path)
 
 
+@app.post("/api/analyze/jobs", status_code=202)
+async def start_analysis_job(
+    background_tasks: BackgroundTasks,
+    files: Annotated[list[UploadFile] | None, File(description="PDF o TXT")] = None,
+    umbral: Annotated[float, Form()] = 0.80,
+    minimo: Annotated[int, Form()] = 5,
+    sin_pdf: Annotated[bool, Form()] = True,
+    tema: Annotated[str | None, Form()] = None,
+) -> dict[str, str]:
+    files = files or []
+    selected_theme_dir = _theme_directory(tema) if tema else None
+    if not files and selected_theme_dir is None:
+        raise HTTPException(status_code=400, detail="Selecciona un tema con documentos o sube archivos.")
+    if selected_theme_dir is None and tema and _resolve_topic_key(tema) is None:
+        raise HTTPException(status_code=400, detail="El tema no existe.")
+
+    uploaded_files: list[tuple[str, bytes]] = []
+    for upload in files:
+        if upload.filename is None:
+            raise HTTPException(status_code=400, detail="Nombre de archivo no válido.")
+        if Path(upload.filename).suffix.lower() not in ALLOWED_EXTENSIONS:
+            raise HTTPException(status_code=400, detail="Solo se aceptan PDFs y TXT.")
+        if upload.size and upload.size > UPLOAD_LIMIT:
+            raise HTTPException(status_code=413, detail=f"Archivo demasiado grande: {upload.filename}")
+        uploaded_files.append((upload.filename, await upload.read()))
+
+    job_id = uuid.uuid4().hex
+    _write_job_status(job_id, "queued", message="Análisis en cola.")
+    background_tasks.add_task(_run_analysis_job, job_id, uploaded_files, umbral, minimo, sin_pdf, tema)
+    return {"job_id": job_id, "status": "queued"}
+
+
+@app.get("/api/analyze/jobs/{job_id}")
+def analysis_job(job_id: str) -> dict[str, object]:
+    if not re.fullmatch(r"[a-f0-9]{32}", job_id):
+        raise HTTPException(status_code=404, detail="Trabajo no encontrado.")
+    status_path = JOBS_DIR / f"{job_id}.json"
+    if not status_path.is_file():
+        raise HTTPException(status_code=404, detail="Trabajo no encontrado.")
+    try:
+        payload = json.loads(status_path.read_text(encoding="utf-8"))
+    except json.JSONDecodeError as exc:
+        raise HTTPException(status_code=500, detail="Estado de trabajo inválido.") from exc
+    return payload
+
+
 @app.post("/api/analyze")
 async def analyze(
     files: Annotated[list[UploadFile] | None, File(description="PDF o TXT")] = None,
@@ -402,7 +497,7 @@ async def analyze(
 
         def run_pipeline() -> dict[str, object]:
             if tema:
-                resolved = tema if tema in queries.TEMAS else main._resolver_tema(_normalize_theme_name(tema))
+                resolved = tema if tema in queries.TEMAS else _resolve_topic_key(tema)
                 if resolved:
                     result = main.procesar_tema(
                         resolved,

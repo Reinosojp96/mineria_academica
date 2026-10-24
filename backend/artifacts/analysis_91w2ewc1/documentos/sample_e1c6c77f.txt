@@ -1,0 +1,1 @@
+Knowledge discovery in databases uses data mining algorithms. The KDD process includes data preparation, modeling and evaluation.

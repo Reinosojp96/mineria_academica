@@ -8,7 +8,7 @@ from urllib.parse import quote
 
 from fastapi.testclient import TestClient
 
-from backend.api import app, ARTIFACTS_DIR
+from backend.api import app, ARTIFACTS_DIR, _resolve_topic_key
 
 
 class ApiTestCase(unittest.TestCase):
@@ -26,6 +26,20 @@ class ApiTestCase(unittest.TestCase):
         data = response.json()
         self.assertGreater(len(data["temas"]), 0)
         self.assertIn("KDD", data["temas"])
+
+    def test_display_topic_names_resolve_to_single_internal_topic(self) -> None:
+        expected_topics = {
+            "Mineria de Datos": "mineria_de_datos",
+            "KDD": "kdd",
+            "CRISP-DM": "crisp_dm",
+            "Modelos de Mineria de Datos": "modelo",
+            "Modelos Hibridos y Ensembles": "modelo_hibrido",
+            "Prediccion y Analitica Predictiva": "prediccion",
+            "Data Warehouse y OLAP": "data_warehouse",
+        }
+        for title, topic_key in expected_topics.items():
+            with self.subTest(title=title):
+                self.assertEqual(_resolve_topic_key(title), topic_key)
 
     def test_analysis_with_real_document(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:
@@ -90,6 +104,64 @@ class ApiTestCase(unittest.TestCase):
             self.assertEqual(payload["documentos"], 1)
             self.assertIn("7 temas", payload["resumen"])
             self.assertTrue(payload["graficos"])
+        finally:
+            sample.unlink(missing_ok=True)
+            theme_dir.rmdir()
+
+    def test_display_name_folder_analyzes_only_its_mapped_topic(self) -> None:
+        theme_dir = ARTIFACTS_DIR.parent / "documentos" / "Modelos de Mineria de Datos"
+        theme_dir_existed = theme_dir.exists()
+        theme_dir.mkdir(exist_ok=True)
+        sample = theme_dir / f"modelo-{uuid.uuid4().hex[:8]}.txt"
+        sample.write_text(
+            "A data mining classification model uses a decision tree and regression model. "
+            "The predictive model evaluates classification accuracy on the dataset.",
+            encoding="utf-8",
+        )
+        expected_document_count = sum(
+            path.is_file() and path.suffix.lower() in {".pdf", ".txt"}
+            for path in theme_dir.rglob("*")
+        )
+
+        try:
+            response = self.client.post(
+                "/api/analyze",
+                data={"tema": theme_dir.name, "umbral": "0.80", "minimo": "1", "sin_pdf": "true"},
+            )
+            self.assertEqual(response.status_code, 200, response.text)
+            payload = response.json()
+            self.assertEqual(payload["documentos"], expected_document_count)
+            self.assertEqual(payload["temas"], ["modelo"])
+            self.assertEqual([report["tema"] for report in payload["informes"]], ["modelo"])
+        finally:
+            sample.unlink(missing_ok=True)
+            if not theme_dir_existed:
+                theme_dir.rmdir()
+
+    def test_analysis_job_returns_status_and_result(self) -> None:
+        theme_name = f"Job de prueba {uuid.uuid4().hex[:8]}"
+        theme_dir = ARTIFACTS_DIR.parent / "documentos" / theme_name
+        theme_dir.mkdir()
+        sample = theme_dir / "paper.txt"
+        sample.write_text(
+            "Data mining models classify records with decision trees and regression.",
+            encoding="utf-8",
+        )
+
+        try:
+            response = self.client.post(
+                "/api/analyze/jobs",
+                data={"tema": theme_name, "umbral": "0.80", "minimo": "1", "sin_pdf": "true"},
+            )
+            self.assertEqual(response.status_code, 202, response.text)
+            job_id = response.json()["job_id"]
+
+            status_response = self.client.get(f"/api/analyze/jobs/{job_id}")
+            self.assertEqual(status_response.status_code, 200, status_response.text)
+            status = status_response.json()
+            self.assertEqual(status["status"], "completed")
+            self.assertEqual(status["result"]["documentos"], 1)
+            self.assertEqual(status["result"]["temas"], ["mineria_de_datos", "kdd", "crisp_dm", "modelo", "modelo_hibrido", "prediccion", "data_warehouse"])
         finally:
             sample.unlink(missing_ok=True)
             theme_dir.rmdir()
