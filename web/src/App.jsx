@@ -45,7 +45,7 @@ function formatSessionDate(value) {
 }
 
 function App() {
-  const [activeTab, setActiveTab] = useState('ingesta')
+  const [activeTab, setActiveTab] = useState('inicio')
   const [darkMode, setDarkMode] = useState(false)
   const [topics, setTopics] = useState([])
   const [selectedTopic, setSelectedTopic] = useState('')
@@ -403,7 +403,7 @@ function App() {
     <main className="app-shell" data-theme={darkMode ? 'dark' : 'light'}>
       <header className="app-header">
         <div className="header-main">
-          <a className="brand-lockup" href="#ingesta" onClick={() => setActiveTab('ingesta')}>
+          <a className="brand-lockup" href="#inicio" onClick={() => setActiveTab('inicio')}>
             <span className="brand-mark material-symbols-outlined" aria-hidden="true">database</span>
             <span className="brand-copy">
               <span className="brand-title">Minería Académica <span className="brand-badge">LAB</span></span>
@@ -432,6 +432,7 @@ function App() {
 
         <nav className="main-tabs" aria-label="Secciones del espacio de trabajo" role="tablist">
           {[
+            ['inicio', 'home', 'Inicio'],
             ['ingesta', 'folder_special', 'Ingesta & Corpus'],
             ['config', 'tune', 'Configuración'],
             ['sesiones', 'history', 'Sesiones'],
@@ -453,6 +454,59 @@ function App() {
       </header>
 
       <div className="workspace">
+
+      <section id="inicio" className={`welcome-view${activeTab !== 'inicio' ? ' tab-hidden' : ''}`}>
+        <div className="welcome-hero">
+          <div className="welcome-copy">
+            <p className="section-label">Laboratorio documental</p>
+            <h1>De tus documentos a una investigación mejor organizada.</h1>
+            <p className="welcome-description">
+              Analiza literatura académica por tema, encuentra los documentos más
+              relacionados y consulta informes con rankings y visualizaciones.
+            </p>
+            <div className="welcome-actions">
+              <button className="primary-button" type="button" onClick={() => setActiveTab('ingesta')}>
+                <span className="material-symbols-outlined" aria-hidden="true">play_arrow</span>
+                Empezar un análisis
+              </button>
+              <a className="welcome-secondary-link" href="#tutorial">
+                Ver guía de uso
+                <span className="material-symbols-outlined" aria-hidden="true">south</span>
+              </a>
+            </div>
+            <div className="welcome-highlights" aria-label="Funciones principales">
+              <span><span className="material-symbols-outlined" aria-hidden="true">description</span> PDF y TXT</span>
+              <span><span className="material-symbols-outlined" aria-hidden="true">topic</span> 7 temas académicos</span>
+              <span><span className="material-symbols-outlined" aria-hidden="true">insights</span> Rankings e informes</span>
+            </div>
+          </div>
+          <aside className="welcome-process" aria-label="Pasos del análisis">
+            <div className="welcome-process-icon material-symbols-outlined" aria-hidden="true">analytics</div>
+            <p className="section-label">Tu flujo de trabajo</p>
+            <h2>Del corpus a la evidencia</h2>
+            <ol>
+              <li><span>01</span><div><strong>Organiza</strong><small>Agrega documentos y selecciona un tema.</small></div></li>
+              <li><span>02</span><div><strong>Analiza</strong><small>Calcula la similitud temática de tus documentos.</small></div></li>
+              <li><span>03</span><div><strong>Explora</strong><small>Consulta el ranking, los gráficos y el informe.</small></div></li>
+            </ol>
+          </aside>
+        </div>
+
+        <section id="tutorial" className="welcome-tutorial panel">
+          <div className="welcome-tutorial-heading">
+            <div>
+              <p className="section-label">Guía de uso</p>
+              <h2>Conoce la plataforma paso a paso</h2>
+              <p>Mira el recorrido y aprende a cargar documentos, ejecutar un análisis y consultar tus resultados.</p>
+            </div>
+            <span className="tutorial-duration"><span className="material-symbols-outlined" aria-hidden="true">smart_display</span> Tutorial en video</span>
+          </div>
+          <video className="tutorial-video" controls preload="metadata" playsInline aria-label="Video tutorial de uso de Minería Académica">
+            <source src="/tutorial-uso.mp4" type="video/mp4" />
+            Tu navegador no puede reproducir este video. Intenta abrirlo en un navegador actualizado.
+          </video>
+        </section>
+      </section>
 
       <section id="ingesta" className={`panel session-panel corpus-panel${activeTab !== 'ingesta' ? ' tab-hidden' : ''}`}>
         <div className="section-heading">
@@ -840,6 +894,7 @@ function App() {
 
       <nav className="mobile-bottom-nav" aria-label="Navegación inferior">
         {[
+          ['inicio', 'home', 'Inicio'],
           ['ingesta', 'folder_special', 'Ingesta'],
           ['config', 'tune', 'Ajustes'],
           ['sesiones', 'history', 'Sesiones'],
