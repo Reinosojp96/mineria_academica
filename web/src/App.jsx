@@ -44,6 +44,45 @@ function formatSessionDate(value) {
   }).format(date)
 }
 
+function createQuizQuestion(question, answer, candidates) {
+  const options = [...new Set([answer, ...candidates].map(String).filter(Boolean))]
+  for (let index = 1; options.length < 3; index += 1) {
+    options.push(`Otra opción ${index}`)
+  }
+  const selectedOptions = options.slice(0, 3)
+  for (let index = selectedOptions.length - 1; index > 0; index -= 1) {
+    const swapIndex = Math.floor(Math.random() * (index + 1))
+    ;[selectedOptions[index], selectedOptions[swapIndex]] = [selectedOptions[swapIndex], selectedOptions[index]]
+  }
+  return { question, answer, options: selectedOptions }
+}
+
+function buildQuiz(report, reports) {
+  const documents = report.documentos ?? []
+  const topDocument = documents[0]
+  const relevantCount = documents.length
+  const relevance = topDocument ? Number(topDocument.relevancia) : 0
+  const evidenceAnswer = report.ejemplo_nombre || 'El informe no incluye un fragmento de evidencia'
+  const reportDocuments = reports.flatMap((item) => item.documentos ?? []).map((document) => document.nombre)
+  const documentChoices = [...reportDocuments, 'Otro documento del corpus', 'No se encontró evidencia']
+  const countChoices = [relevantCount + 1, Math.max(0, relevantCount - 1), Number(report.total_documentos) || 0]
+  const relevanceChoices = [relevance + 5, Math.max(0, relevance - 5), 0]
+
+  return [
+    createQuizQuestion('¿Qué tema analiza este informe?', report.tema, [
+      ...reports.map((item) => item.tema), 'Minería de datos', 'Predicción analítica', 'Almacenes de datos',
+    ]),
+    createQuizQuestion('¿Cuántos documentos aparecen como relevantes?', `${relevantCount} documentos`, countChoices.map((count) => `${count} documentos`)),
+    createQuizQuestion('¿Qué documento ocupa el primer lugar del ranking?', topDocument?.nombre || 'No hay documentos relevantes', [
+      ...documents.slice(1).map((document) => document.nombre), ...documentChoices,
+    ]),
+    createQuizQuestion('¿Cuál es la relevancia del documento mejor posicionado?', `${relevance.toFixed(2)}%`, relevanceChoices.map((score) => `${score.toFixed(2)}%`)),
+    createQuizQuestion('¿De qué documento se recuperó el ejemplo de evidencia?', evidenceAnswer, [
+      ...documentChoices, 'El informe no incluye un fragmento de evidencia',
+    ]),
+  ]
+}
+
 function App() {
   const [activeTab, setActiveTab] = useState('inicio')
   const [darkMode, setDarkMode] = useState(false)
@@ -60,6 +99,13 @@ function App() {
   const [error, setError] = useState('')
   const [result, setResult] = useState(null)
   const [selectedReportIndex, setSelectedReportIndex] = useState(0)
+  const [quizTopic, setQuizTopic] = useState('')
+  const [quizQuestions, setQuizQuestions] = useState([])
+  const [quizQuestionIndex, setQuizQuestionIndex] = useState(0)
+  const [quizAnswers, setQuizAnswers] = useState([])
+  const [quizSelectedAnswer, setQuizSelectedAnswer] = useState('')
+  const [quizStarted, setQuizStarted] = useState(false)
+  const [quizFinished, setQuizFinished] = useState(false)
   const [sessions, setSessions] = useState([])
   const [busySessionId, setBusySessionId] = useState('')
   const [themeName, setThemeName] = useState('')
@@ -73,6 +119,7 @@ function App() {
   const folderInputRef = useRef(null)
   const resultsRef = useRef(null)
   const selectedReport = result?.informes?.[selectedReportIndex]
+  const quizReport = result?.informes?.find((report) => report.tema === quizTopic) ?? result?.informes?.[0]
 
   const loadSessions = () => {
     apiFetch('/api/sessions')
@@ -321,6 +368,7 @@ function App() {
       }
       setResult(payload)
       setSelectedReportIndex(0)
+      setQuizTopic(payload.informes?.[0]?.tema ?? '')
       setActiveTab('informe')
       loadSessions()
     } catch (requestError) {
@@ -343,6 +391,7 @@ function App() {
       }
       setResult(payload)
       setSelectedReportIndex(0)
+      setQuizTopic(payload.informes?.[0]?.tema ?? '')
       setDocuments([])
       setActiveTab('informe')
       setError('')
@@ -399,6 +448,39 @@ function App() {
     }
   }
 
+  const resetQuiz = (topic = quizTopic) => {
+    setQuizTopic(topic)
+    setQuizQuestions([])
+    setQuizQuestionIndex(0)
+    setQuizAnswers([])
+    setQuizSelectedAnswer('')
+    setQuizStarted(false)
+    setQuizFinished(false)
+  }
+
+  const startQuiz = () => {
+    if (!quizReport) return
+    setQuizQuestions(buildQuiz(quizReport, result.informes ?? []))
+    setQuizQuestionIndex(0)
+    setQuizAnswers([])
+    setQuizSelectedAnswer('')
+    setQuizFinished(false)
+    setQuizStarted(true)
+  }
+
+  const submitQuizAnswer = () => {
+    if (!quizSelectedAnswer) return
+    const answers = [...quizAnswers, quizSelectedAnswer]
+    setQuizAnswers(answers)
+    setQuizSelectedAnswer('')
+    if (quizQuestionIndex === quizQuestions.length - 1) {
+      setQuizStarted(false)
+      setQuizFinished(true)
+    } else {
+      setQuizQuestionIndex((index) => index + 1)
+    }
+  }
+
   return (
     <main className="app-shell" data-theme={darkMode ? 'dark' : 'light'}>
       <header className="app-header">
@@ -437,6 +519,7 @@ function App() {
             ['config', 'tune', 'Configuración'],
             ['sesiones', 'history', 'Sesiones'],
             ['informe', 'assessment', 'Informe Evidencia'],
+            ['reto', 'quiz', 'Reto rápido'],
           ].map(([tab, icon, label]) => (
             <button
               key={tab}
@@ -882,6 +965,97 @@ function App() {
           </div>
         </section>
       )}
+      {activeTab === 'reto' && (
+        <section id="reto" className="panel quiz-panel">
+          <div className="section-heading">
+            <div>
+              <p className="section-label">Repaso interactivo</p>
+              <h2>Reto rápido</h2>
+            </div>
+            <span className="result-badge">5 preguntas · 3 opciones</span>
+          </div>
+
+          {result?.informes?.length ? (
+            <>
+              <label className="quiz-topic-label" htmlFor="quiz-topic-select">
+                Tema del cuestionario
+                <select
+                  id="quiz-topic-select"
+                  value={quizReport?.tema ?? ''}
+                  disabled={quizStarted}
+                  onChange={(event) => resetQuiz(event.target.value)}
+                >
+                  {result.informes.map((report) => <option key={report.tema} value={report.tema}>{report.tema}</option>)}
+                </select>
+              </label>
+
+              {!quizStarted && !quizFinished && (
+                <div className="quiz-intro">
+                  <span className="material-symbols-outlined" aria-hidden="true">quiz</span>
+                  <div>
+                    <h3>{quizReport?.titulo ?? quizReport?.tema}</h3>
+                    <p>Comprueba lo que revela el análisis de este tema. Al terminar verás tu puntuación y las respuestas correctas.</p>
+                  </div>
+                  <button className="primary-button" type="button" onClick={startQuiz}>Empezar reto</button>
+                </div>
+              )}
+
+              {quizStarted && quizQuestions[quizQuestionIndex] && (
+                <div className="quiz-question">
+                  <div className="quiz-progress-row">
+                    <span>Pregunta {quizQuestionIndex + 1} de 5</span>
+                    <progress value={quizQuestionIndex + 1} max="5" aria-label={`Pregunta ${quizQuestionIndex + 1} de 5`} />
+                  </div>
+                  <h3>{quizQuestions[quizQuestionIndex].question}</h3>
+                  <div className="quiz-options">
+                    {quizQuestions[quizQuestionIndex].options.map((option, index) => (
+                      <button
+                        key={`${option}-${index}`}
+                        className={`quiz-option${quizSelectedAnswer === option ? ' selected' : ''}`}
+                        type="button"
+                        aria-pressed={quizSelectedAnswer === option}
+                        onClick={() => setQuizSelectedAnswer(option)}
+                      >
+                        <span>{String.fromCharCode(65 + index)}</span>{option}
+                      </button>
+                    ))}
+                  </div>
+                  <button className="primary-button quiz-next" type="button" disabled={!quizSelectedAnswer} onClick={submitQuizAnswer}>
+                    {quizQuestionIndex === 4 ? 'Ver resultado' : 'Siguiente pregunta'}
+                  </button>
+                </div>
+              )}
+
+              {quizFinished && (
+                <div className="quiz-result">
+                  <p className="section-label">Resultado final</p>
+                  <strong className="quiz-score">{quizAnswers.filter((answer, index) => answer === quizQuestions[index]?.answer).length}<span>/5</span></strong>
+                  <h3>{quizAnswers.filter((answer, index) => answer === quizQuestions[index]?.answer).length >= 4 ? '¡Excelente dominio del tema!' : 'Reto completado'}</h3>
+                  <ol className="quiz-review">
+                    {quizQuestions.map((question, index) => {
+                      const correct = quizAnswers[index] === question.answer
+                      return (
+                        <li key={question.question} className={correct ? 'correct' : 'incorrect'}>
+                          <span className="material-symbols-outlined" aria-hidden="true">{correct ? 'check_circle' : 'cancel'}</span>
+                          <div><strong>{question.question}</strong><span>Respuesta correcta: {question.answer}</span></div>
+                        </li>
+                      )
+                    })}
+                  </ol>
+                  <button className="primary-button" type="button" onClick={startQuiz}>Jugar de nuevo</button>
+                </div>
+              )}
+            </>
+          ) : (
+            <div className="quiz-empty">
+              <span className="material-symbols-outlined" aria-hidden="true">query_stats</span>
+              <h3>Primero necesitas un informe de análisis</h3>
+              <p>El reto toma sus preguntas del ranking y la evidencia generados para cada tema.</p>
+              <button className="primary-button" type="button" onClick={() => setActiveTab('config')}>Ir al análisis</button>
+            </div>
+          )}
+        </section>
+      )}
       {activeTab === 'informe' && !result && (
         <section id="informe" className="empty-report">
           <span className="material-symbols-outlined" aria-hidden="true">description</span>
@@ -899,6 +1073,7 @@ function App() {
           ['config', 'tune', 'Ajustes'],
           ['sesiones', 'history', 'Sesiones'],
           ['informe', 'assessment', 'Informe'],
+          ['reto', 'quiz', 'Reto'],
         ].map(([tab, icon, label]) => (
           <button key={tab} type="button" className={activeTab === tab ? 'active' : ''} aria-current={activeTab === tab ? 'page' : undefined} onClick={() => setActiveTab(tab)}>
             <span className="material-symbols-outlined" aria-hidden="true">{icon}</span>
