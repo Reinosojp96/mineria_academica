@@ -520,6 +520,7 @@ function App() {
             ['sesiones', 'history', 'Sesiones'],
             ['informe', 'assessment', 'Informe Evidencia'],
             ['reto', 'quiz', 'Reto rápido'],
+            ['acerca', 'info', 'Acerca de'],
           ].map(([tab, icon, label]) => (
             <button
               key={tab}
@@ -1056,6 +1057,49 @@ function App() {
           )}
         </section>
       )}
+      {activeTab === 'acerca' && (
+        <section id="acerca" className="panel about-panel">
+          <div className="about-heading">
+            <p className="section-label">Método y tecnología</p>
+            <h2>Acerca de Minería Académica</h2>
+            <p>La plataforma organiza documentos por tema y calcula cuáles se relacionan más con cada consulta. El análisis se ejecuta en el backend Python del proyecto; la interfaz web presenta y explora sus resultados.</p>
+          </div>
+
+          <div className="about-process" aria-label="Etapas del análisis">
+            <article className="about-stage">
+              <span className="about-stage-number">01 / INGESTA</span>
+              <h3>Lectura de documentos</h3>
+              <p>Acepta archivos PDF y TXT. <strong>pdfplumber</strong> extrae el texto de los PDF; los TXT se leen directamente. Los PDF escaneados que no contienen una capa de texto no se procesan porque el proyecto no incorpora OCR.</p>
+            </article>
+            <article className="about-stage">
+              <span className="about-stage-number">02 / CLASIFICACIÓN</span>
+              <h3>Organización por tema</h3>
+              <p>El clasificador compara el texto de cada documento con centroides construidos a partir de los nombres, términos y consultas de los temas. Los documentos con baja confianza pueden quedar sin clasificar.</p>
+            </article>
+            <article className="about-stage">
+              <span className="about-stage-number">03 / RELEVANCIA</span>
+              <h3>TF-IDF y similitud coseno</h3>
+              <p><strong>scikit-learn</strong> representa términos y pares de palabras con TF-IDF. La similitud coseno compara cada documento con la consulta del tema y produce un ranking; el porcentaje expresa similitud, no probabilidad.</p>
+            </article>
+            <article className="about-stage">
+              <span className="about-stage-number">04 / RESULTADOS</span>
+              <h3>Rankings e informes</h3>
+              <p>El umbral acumulado y el mínimo de resultados se pueden configurar. <strong>matplotlib</strong> genera gráficas PNG y el ranking puede exportarse a CSV. <strong>Jinja2</strong> prepara los informes LaTeX; la compilación a PDF requiere un motor LaTeX instalado.</p>
+            </article>
+          </div>
+
+          <div className="about-tools">
+            <div>
+              <h3>Aplicación web</h3>
+              <p><strong>React</strong> construye la interfaz y <strong>Vite</strong> la prepara para desarrollo y producción.</p>
+            </div>
+            <div>
+              <h3>Procesamiento y API</h3>
+              <p><strong>Python</strong> ejecuta el análisis y <strong>FastAPI</strong> conecta la web con el backend. Las librerías de análisis trabajan sobre el corpus del proyecto; no se usa un servicio de IA generativa externo.</p>
+            </div>
+          </div>
+        </section>
+      )}
       {activeTab === 'informe' && !result && (
         <section id="informe" className="empty-report">
           <span className="material-symbols-outlined" aria-hidden="true">description</span>
@@ -1074,6 +1118,7 @@ function App() {
           ['sesiones', 'history', 'Sesiones'],
           ['informe', 'assessment', 'Informe'],
           ['reto', 'quiz', 'Reto'],
+          ['acerca', 'info', 'Acerca'],
         ].map(([tab, icon, label]) => (
           <button key={tab} type="button" className={activeTab === tab ? 'active' : ''} aria-current={activeTab === tab ? 'page' : undefined} onClick={() => setActiveTab(tab)}>
             <span className="material-symbols-outlined" aria-hidden="true">{icon}</span>
