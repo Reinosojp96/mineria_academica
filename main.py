@@ -169,10 +169,14 @@ def pipeline_completo(
     _titulo_consola("PASO 5/6 - INFORMES LATEX", 60)
     rutas_tex: list[str] = []
     ejemplos_por_tema: dict[str, dict[str, str]] = {}
+    fuentes_por_tema: dict[str, list[dict[str, object]]] = {}
+    bot_evidencia = qa_mod.QA(docs) if docs else None
     for tema in queries.listar_temas():
         ranking = ranking_por_tema.get(tema) or []
         ejemplo, ejemplo_nombre = _mejor_ejemplo(docs, tema)
         ejemplos_por_tema[tema] = {"texto": ejemplo, "documento": ejemplo_nombre}
+        fuentes = _fuentes_de_evidencia(bot_evidencia, ranking, tema)
+        fuentes_por_tema[tema] = fuentes
         rutas_tex.append(
             latex_gen.generar_tex(
                 tema=tema,
@@ -184,6 +188,8 @@ def pipeline_completo(
                 total_documentos=len(docs),
                 umbral=umbral,
                 minimo_resultados=minimo,
+                descripcion_tema=queries.descripcion_tema(tema),
+                fuentes=fuentes,
             )
         )
         # CSV de respaldo por tema (se abre en Excel con acentos correctos)
@@ -217,6 +223,7 @@ def pipeline_completo(
         "docs": docs,
         "temas": ranking_por_tema,
         "ejemplos": ejemplos_por_tema,
+        "fuentes": fuentes_por_tema,
         "clasificacion": asignacion,
         "confianza": confianza,
         "conteo": conteo,
@@ -253,6 +260,8 @@ def procesar_tema(
         ranking, carpeta_salida / f"grafico_{tema}.png", tema
     )
     ejemplo, _nombre = _mejor_ejemplo(docs, tema)
+    bot_evidencia = qa_mod.QA(docs) if docs else None
+    fuentes = _fuentes_de_evidencia(bot_evidencia, ranking, tema)
     ruta_tex = latex_gen.generar_tex(
         tema=tema,
         query=query,
@@ -263,6 +272,8 @@ def procesar_tema(
         total_documentos=len(docs),
         umbral=umbral,
         minimo_resultados=minimo,
+        descripcion_tema=queries.descripcion_tema(tema),
+        fuentes=fuentes,
     )
     ruta_pdf = latex_gen.compilar_pdf(ruta_tex) if compilar else None
 
@@ -274,6 +285,8 @@ def procesar_tema(
         "relevancia": ranking,
         "ejemplo": ejemplo,
         "ejemplo_nombre": _nombre,
+        "descripcion_tema": queries.descripcion_tema(tema),
+        "fuentes": fuentes,
         "png": ruta_png,
         "tex": ruta_tex,
         "pdf": ruta_pdf,
@@ -354,6 +367,29 @@ def modo_qa(
 # ======================================================================
 # Auxiliares
 # ======================================================================
+def _fuentes_de_evidencia(
+    bot: qa_mod.QA | None,
+    ranking: list[tuple[str, float]],
+    tema: str,
+) -> list[dict[str, object]]:
+    """Extrae un fragmento verificable de los documentos mejor posicionados."""
+    if bot is None or not ranking:
+        return []
+
+    pregunta = " ".join([queries.titulo_tema(tema), *queries.terminos_tema(tema)])
+    fuentes: list[dict[str, object]] = []
+    for nombre, score in ranking:
+        fragmento = bot.extraer_fragmento(nombre, pregunta, longitud_fragmento=500)
+        if fragmento:
+            fuentes.append({
+                "documento": nombre,
+                "referencia": nombre,
+                "relevancia": float(score),
+                "fragmento": fragmento,
+            })
+    return fuentes
+
+
 def _mejor_ejemplo(
     docs: dict[str, str], tema: str, max_chars: int = 1200
 ) -> tuple[str, str]:

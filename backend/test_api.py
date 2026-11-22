@@ -102,12 +102,46 @@ class ApiTestCase(unittest.TestCase):
             self.assertIn("knowledge discovery", kdd_report["consulta"].lower())
             self.assertTrue(kdd_report["documentos"])
             self.assertTrue(kdd_report["ejemplo"])
+            self.assertTrue(kdd_report["descripcion_tema"])
+            self.assertTrue(kdd_report["fuentes"])
+            self.assertIn("data preparation", kdd_report["fuentes"][0]["fragmento"].lower())
             self.assertTrue(kdd_report["grafico"].endswith("grafico_kdd.png"))
             self.assertTrue(kdd_report["tex_url"].endswith("kdd.tex"))
             chart_response = self.client.get(payload["graficos"][0])
             self.assertEqual(chart_response.status_code, 200)
             self.assertTrue(payload["tex"])
             self.assertTrue((api.DOCUMENTS_DIR / sample.name).exists())
+
+            question_response = self.client.post(
+                "/api/preguntar",
+                json={
+                    "session_id": payload["session_id"],
+                    "tema": "kdd",
+                    "pregunta": "What does the KDD process include?",
+                },
+            )
+            self.assertEqual(question_response.status_code, 200, question_response.text)
+            answers = question_response.json()["respuestas"]
+            self.assertTrue(answers)
+            self.assertRegex(answers[0]["documento"], r"^sample_[a-f0-9]{8}\.txt$")
+            self.assertIn("data preparation", answers[0]["fragmento"].lower())
+            self.assertGreater(answers[0]["relevancia"], 0)
+            source_response = self.client.get(
+                f"/api/sessions/{payload['session_id']}/documento",
+                params={"archivo": answers[0]["referencia"]},
+            )
+            self.assertEqual(source_response.status_code, 200, source_response.text)
+            self.assertIn(b"data preparation", source_response.content.lower())
+            traversal_response = self.client.get(
+                f"/api/sessions/{payload['session_id']}/documento",
+                params={"archivo": "../secret.txt"},
+            )
+            self.assertEqual(traversal_response.status_code, 400)
+            tex_response = self.client.get(kdd_report["tex_url"])
+            self.assertEqual(tex_response.status_code, 200)
+            self.assertIn("Hallazgos y fuentes del corpus", tex_response.text)
+            escaped_source_name = kdd_report["fuentes"][0]["documento"].replace("_", r"\_")
+            self.assertIn(escaped_source_name, tex_response.text)
 
     def test_analysis_reads_selected_theme_folder_without_upload(self) -> None:
         documents_dir = api.DOCUMENTS_DIR
@@ -134,9 +168,55 @@ class ApiTestCase(unittest.TestCase):
             self.assertEqual(payload["documentos"], 1)
             self.assertIn("7 temas", payload["resumen"])
             self.assertTrue(payload["graficos"])
+            question_response = self.client.post(
+                "/api/preguntar",
+                json={
+                    "session_id": payload["session_id"],
+                    "tema": "kdd",
+                    "pregunta": "What does the KDD process include?",
+                },
+            )
+            self.assertEqual(question_response.status_code, 200, question_response.text)
+            self.assertTrue(question_response.json()["respuestas"])
+            source_response = self.client.get(
+                f"/api/sessions/{payload['session_id']}/documento",
+                params={"archivo": "paper.txt"},
+            )
+            self.assertEqual(source_response.status_code, 200, source_response.text)
         finally:
             sample.unlink(missing_ok=True)
             theme_dir.rmdir()
+
+    def test_enriched_report_compiles_to_pdf_when_latex_is_available(self) -> None:
+        if not api.main.latex_gen.pdflatex_disponible():
+            self.skipTest("No hay un motor LaTeX instalado.")
+
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            documents_dir = root / "documentos"
+            output_dir = root / "salida"
+            documents_dir.mkdir()
+            (documents_dir / "paper.txt").write_text(
+                "Knowledge discovery in databases uses data mining algorithms. "
+                "The KDD process includes data preparation, modeling and evaluation.",
+                encoding="utf-8",
+            )
+
+            result = api.main.procesar_tema(
+                "kdd",
+                documents_dir,
+                output_dir,
+                umbral=0.8,
+                minimo=1,
+                compilar=True,
+            )
+
+            pdf_path = Path(result["pdf"])
+            tex_content = Path(result["tex"]).read_text(encoding="utf-8")
+            self.assertTrue(pdf_path.is_file())
+            self.assertTrue(pdf_path.read_bytes().startswith(b"%PDF"))
+            self.assertIn("Hallazgos y fuentes del corpus", tex_content)
+            self.assertIn("paper.txt", tex_content)
 
     def test_display_name_folder_analyzes_only_its_mapped_topic(self) -> None:
         theme_dir = api.DOCUMENTS_DIR / "Modelos de Mineria de Datos"

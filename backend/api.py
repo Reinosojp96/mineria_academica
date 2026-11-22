@@ -19,8 +19,10 @@ from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
+import ingesta
 import main
 import queries
+import qa as qa_module
 
 BASE_DIR = Path(__file__).resolve().parent
 DATA_DIR = Path(os.environ.get("APP_DATA_DIR", BASE_DIR)).expanduser()
@@ -71,6 +73,12 @@ class AnalysisResult(BaseModel):
     csv: list[str]
     resumen: str
     informes: list[dict[str, object]] = Field(default_factory=list)
+
+
+class QuestionRequest(BaseModel):
+    session_id: str
+    tema: str
+    pregunta: str = Field(min_length=1, max_length=1000)
 
 
 ARTIFACTS_DIR.mkdir(parents=True, exist_ok=True)
@@ -427,6 +435,101 @@ def artifact(session_id: str, filename: str) -> FileResponse:
     return FileResponse(file_path)
 
 
+@app.get("/api/sessions/{session_id}/documento")
+def session_document(session_id: str, archivo: str, tema: str | None = None) -> FileResponse:
+    session_dir = _session_directory(session_id)
+    relative_path = PurePosixPath(archivo.replace("\\", "/"))
+    if relative_path.is_absolute() or ".." in relative_path.parts:
+        raise HTTPException(status_code=400, detail="Ruta de documento no válida.")
+    if Path(relative_path.name).suffix.lower() not in ALLOWED_EXTENSIONS:
+        raise HTTPException(status_code=400, detail="Solo se pueden consultar PDF y TXT.")
+
+    source_roots = [session_dir / "documentos"]
+    summary_path = session_dir / "salida" / "summary.json"
+    if summary_path.is_file():
+        try:
+            summary = json.loads(summary_path.read_text(encoding="utf-8"))
+        except json.JSONDecodeError as exc:
+            raise HTTPException(status_code=500, detail="Resultado de sesión inválido.") from exc
+        source_folder = summary.get("carpeta_fuente") if isinstance(summary, dict) else None
+        source_folder = source_folder or tema
+        if source_folder:
+            theme_dir = _theme_directory(str(source_folder))
+            if theme_dir is not None:
+                source_roots.append(theme_dir)
+
+    for source_root in source_roots:
+        root = source_root.resolve()
+        document_path = (root / Path(*relative_path.parts)).resolve()
+        if document_path.is_relative_to(root) and document_path.is_file():
+            return FileResponse(document_path)
+    raise HTTPException(status_code=404, detail="Documento fuente no encontrado.")
+
+
+@app.post("/api/preguntar")
+def preguntar(request: QuestionRequest) -> dict[str, object]:
+    question = request.pregunta.strip()
+    if not question:
+        raise HTTPException(status_code=400, detail="Escribe una pregunta sobre el tema.")
+
+    session_dir = _session_directory(request.session_id)
+    summary_path = session_dir / "salida" / "summary.json"
+    if not summary_path.is_file():
+        raise HTTPException(status_code=404, detail="Sesión no encontrada.")
+    try:
+        summary = json.loads(summary_path.read_text(encoding="utf-8"))
+    except json.JSONDecodeError as exc:
+        raise HTTPException(status_code=500, detail="Resultado de sesión inválido.") from exc
+
+    reports = summary.get("informes", []) if isinstance(summary, dict) else []
+    report = next(
+        (item for item in reports if isinstance(item, dict) and item.get("tema") == request.tema),
+        None,
+    )
+    if report is None:
+        raise HTTPException(status_code=404, detail="El tema no pertenece a esta sesión.")
+
+    documents_dir = session_dir / "documentos"
+    documents = ingesta.cargar_documentos(documents_dir)
+    if not documents:
+        source_folder = summary.get("carpeta_fuente") if isinstance(summary, dict) else None
+        theme_dir = _theme_directory(str(source_folder)) if source_folder else None
+        theme_dir = theme_dir or _theme_directory(request.tema)
+        if theme_dir is not None:
+            documents = ingesta.cargar_documentos(theme_dir)
+
+    if len(reports) > 1 and documents:
+        ranked_names = {
+            str(item.get("nombre"))
+            for item in report.get("documentos", [])
+            if isinstance(item, dict) and item.get("nombre")
+        }
+        if ranked_names:
+            topic_documents = {
+                name: text for name, text in documents.items() if name in ranked_names
+            }
+            if topic_documents:
+                documents = topic_documents
+
+    bot = qa_module.QA(documents)
+    answers = [
+        {
+            "documento": item["documento"],
+            "referencia": item["documento"],
+            "fragmento": item["fragmento"],
+            "relevancia": item["score"],
+        }
+        for item in bot.preguntar_detallado(question, top_k=5)
+        if float(item["score"]) > 0
+    ]
+    return {
+        "tema": request.tema,
+        "pregunta": question,
+        "respuestas": answers,
+        "mensaje": "Fragmentos recuperados del corpus; no son una respuesta generada ni una cita bibliográfica completa.",
+    }
+
+
 @app.post("/api/analyze/jobs", status_code=202)
 async def start_analysis_job(
     background_tasks: BackgroundTasks,
@@ -611,6 +714,7 @@ async def analyze(
             reports.append({
                 "tema": report_theme,
                 "titulo": queries.titulo_tema(report_theme),
+                "descripcion_tema": str(report_result.get("descripcion_tema") or queries.descripcion_tema(report_theme)),
                 "consulta": report_result["consulta"],
                 "documentos": [
                     {"nombre": str(name), "relevancia": float(score)}
@@ -619,6 +723,7 @@ async def analyze(
                 "total_documentos": int(report_result["documentos"]),
                 "ejemplo": str(report_result["ejemplo"]),
                 "ejemplo_nombre": str(report_result["ejemplo_nombre"]),
+                "fuentes": report_result.get("fuentes", []),
             })
         else:
             source_docs = result.get("docs", {})
@@ -628,6 +733,7 @@ async def analyze(
                 reports.append({
                     "tema": str(report_theme),
                     "titulo": queries.titulo_tema(str(report_theme)),
+                    "descripcion_tema": queries.descripcion_tema(str(report_theme)),
                     "consulta": queries.generar_busqueda(str(report_theme)),
                     "documentos": [
                         {"nombre": str(name), "relevancia": float(score)}
@@ -636,6 +742,7 @@ async def analyze(
                     "total_documentos": int(result["documentos"]),
                     "ejemplo": str(example_info.get("texto", "")),
                     "ejemplo_nombre": str(example_info.get("documento", "")),
+                    "fuentes": result.get("fuentes", {}).get(report_theme, []),
                 })
 
         tex_urls = [_artifact_url(session_key, Path(path).name) for path in output_files["tex"]]
@@ -660,6 +767,7 @@ async def analyze(
             "csv": [_artifact_url(session_key, Path(path).name) for path in output_files["csv"]],
             "resumen": resumen,
             "informes": reports,
+            "carpeta_fuente": selected_theme_dir.name if selected_theme_dir else None,
         }
         (output_dir / "summary.json").write_text(json.dumps(summary), encoding="utf-8")
 

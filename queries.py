@@ -178,6 +178,16 @@ ORDEN_TEMAS: list[str] = [
     "data_warehouse",
 ]
 
+DESCRIPCIONES_TEMAS: dict[str, str] = {
+    "mineria_de_datos": "Explora conjuntos de datos para identificar patrones y relaciones que puedan convertirse en conocimiento útil.",
+    "kdd": "Describe el proceso de preparar, transformar, analizar e interpretar datos para descubrir conocimiento en bases de datos.",
+    "crisp_dm": "Organiza proyectos de minería de datos en fases que abarcan la comprensión del problema, los datos, el modelado, la evaluación y la puesta en uso.",
+    "modelo": "Reúne métodos de clasificación, regresión, agrupamiento y reglas de asociación usados para describir o predecir patrones en los datos.",
+    "modelo_hibrido": "Estudia la combinación de modelos o algoritmos, incluidos métodos ensemble como bagging, boosting y random forest.",
+    "prediccion": "Usa datos históricos y técnicas analíticas para estimar resultados, tendencias o valores aún no observados.",
+    "data_warehouse": "Aborda la integración y organización de datos para consultas analíticas y análisis multidimensional como OLAP.",
+}
+
 
 # --------------------------------------------------------------------------
 # Funciones de la API publica
@@ -212,6 +222,14 @@ def titulo_tema(tema: str) -> str:
     if clave not in TEMAS:
         raise KeyError(f"Tema desconocido: {tema!r}")
     return str(TEMAS[clave]["titulo"])
+
+
+def descripcion_tema(tema: str) -> str:
+    """Devuelve una descripción editorial breve del tema conocido."""
+    clave = _normalizar(tema)
+    if clave not in TEMAS:
+        raise KeyError(f"Tema desconocido: {tema!r}")
+    return DESCRIPCIONES_TEMAS[clave]
 
 
 def terminos_tema(tema: str) -> list[str]:

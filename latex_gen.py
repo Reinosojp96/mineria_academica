@@ -104,6 +104,8 @@ def generar_tex(
     total_documentos: int | None = None,
     umbral: float = 0.80,
     minimo_resultados: int = 5,
+    descripcion_tema: str = "",
+    fuentes: list[dict[str, object]] | None = None,
 ) -> str:
     """
     Renderiza la plantilla Jinja2 y escribe el .tex.
@@ -118,6 +120,8 @@ def generar_tex(
         total_documentos:  total de documentos analizados (opcional)
         umbral:            umbral acumulado usado en la seleccion
         minimo_resultados: minimo de resultados cuando nadie llega al umbral
+        descripcion_tema: descripcion breve del tema
+        fuentes:           fragmentos recuperados de los documentos relevantes
 
     Returns:
         ruta del .tex generado.
@@ -146,6 +150,16 @@ def generar_tex(
             "Analisis documental con TF-IDF y similitud del coseno"
         ),
         "query": _escapar_latex(query),
+        "descripcion_tema": _escapar_latex(descripcion_tema),
+        "fuentes": [
+            {
+                "documento": _escapar_latex(str(source.get("documento", ""))),
+                "referencia": _escapar_latex(str(source.get("referencia", source.get("documento", "")))),
+                "relevancia": float(source.get("relevancia", 0.0)),
+                "fragmento": _escapar_latex(str(source.get("fragmento", ""))),
+            }
+            for source in (fuentes or [])
+        ],
         "documentos": [
             (_escapar_latex(str(n)), float(s)) for n, s in (documentos or [])
         ],

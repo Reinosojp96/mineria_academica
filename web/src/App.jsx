@@ -99,6 +99,10 @@ function App() {
   const [error, setError] = useState('')
   const [result, setResult] = useState(null)
   const [selectedReportIndex, setSelectedReportIndex] = useState(0)
+  const [chatDraft, setChatDraft] = useState('')
+  const [chatMessages, setChatMessages] = useState([])
+  const [isAsking, setIsAsking] = useState(false)
+  const [chatError, setChatError] = useState('')
   const [quizTopic, setQuizTopic] = useState('')
   const [quizQuestions, setQuizQuestions] = useState([])
   const [quizQuestionIndex, setQuizQuestionIndex] = useState(0)
@@ -368,6 +372,9 @@ function App() {
       }
       setResult(payload)
       setSelectedReportIndex(0)
+      setChatMessages([])
+      setChatDraft('')
+      setChatError('')
       setQuizTopic(payload.informes?.[0]?.tema ?? '')
       setActiveTab('informe')
       loadSessions()
@@ -391,6 +398,9 @@ function App() {
       }
       setResult(payload)
       setSelectedReportIndex(0)
+      setChatMessages([])
+      setChatDraft('')
+      setChatError('')
       setQuizTopic(payload.informes?.[0]?.tema ?? '')
       setDocuments([])
       setActiveTab('informe')
@@ -420,6 +430,41 @@ function App() {
       setError(requestError.message)
     } finally {
       setBusySessionId('')
+    }
+  }
+
+  const askAboutCorpus = async (event) => {
+    event.preventDefault()
+    const question = chatDraft.trim()
+    if (!question || !result?.session_id || !selectedReport || isAsking) return
+
+    setIsAsking(true)
+    setChatError('')
+    setChatMessages((current) => [...current, { role: 'user', text: question }])
+    setChatDraft('')
+    try {
+      const response = await apiFetch('/api/preguntar', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          session_id: result.session_id,
+          tema: selectedReport.tema,
+          pregunta: question,
+        }),
+      })
+      const payload = await response.json()
+      if (!response.ok) throw new Error(payload.detail || 'No se pudo consultar el corpus.')
+      setChatMessages((current) => [...current, {
+        role: 'assistant',
+        text: payload.respuestas?.length
+          ? 'Estos fragmentos del corpus pueden responder tu pregunta:'
+          : 'No encontré fragmentos con coincidencia suficiente en los documentos de este tema.',
+        respuestas: payload.respuestas ?? [],
+      }])
+    } catch (requestError) {
+      setChatError(requestError.message)
+    } finally {
+      setIsAsking(false)
     }
   }
 
@@ -495,6 +540,7 @@ function App() {
           <div className="header-tools">
             <button className="icon-button theme-toggle" type="button" aria-label={darkMode ? 'Activar modo claro' : 'Activar modo oscuro'} onClick={() => setDarkMode((current) => !current)}>
               <span className="material-symbols-outlined" aria-hidden="true">{darkMode ? 'light_mode' : 'dark_mode'}</span>
+              <span className="theme-toggle-label">{darkMode ? 'Modo claro cálido' : 'Modo oscuro suave'}</span>
             </button>
             <span className="header-avatar material-symbols-outlined" aria-label="Usuario local">person</span>
           </div>
@@ -509,30 +555,48 @@ function App() {
               {topics.map((topic) => <option key={topic} value={topic}>{topic}</option>)}
             </select>
           </div>
-          <span className="engine-status"><span className="status-dot" />API {API_URL ? 'CONFIGURADA' : 'SIN CONFIGURAR'}</span>
+          <span className="engine-status"><span className={`status-dot${API_URL ? ' configured' : ' unconfigured'}`} />API {API_URL ? 'CONFIGURADA' : 'SIN CONFIGURAR'}</span>
         </div>
 
         <nav className="main-tabs" aria-label="Secciones del espacio de trabajo" role="tablist">
           {[
-            ['inicio', 'home', 'Inicio'],
-            ['ingesta', 'folder_special', 'Ingesta & Corpus'],
-            ['config', 'tune', 'Configuración'],
-            ['sesiones', 'history', 'Sesiones'],
-            ['informe', 'assessment', 'Informe Evidencia'],
-            ['reto', 'quiz', 'Reto rápido'],
-            ['acerca', 'info', 'Acerca de'],
-          ].map(([tab, icon, label]) => (
-            <button
-              key={tab}
-              className={`main-tab${activeTab === tab ? ' active' : ''}`}
-              type="button"
-              role="tab"
-              aria-selected={activeTab === tab}
-              onClick={() => setActiveTab(tab)}
-            >
-              <span className="material-symbols-outlined" aria-hidden="true">{icon}</span>
-              {label}
-            </button>
+            {
+              title: 'Flujo de investigación',
+              items: [
+                ['inicio', 'home', 'Inicio', 'Ruta y resumen'],
+                ['ingesta', 'folder_special', 'Ingesta & Corpus', 'Documentos y carga'],
+                ['config', 'tune', 'Configuración', 'Umbral y parámetros'],
+                ['informe', 'assessment', 'Informe Evidencia', 'Gráficos y ranking'],
+              ],
+            },
+            {
+              title: 'Biblioteca y práctica',
+              items: [
+                ['sesiones', 'history', 'Sesiones', 'Historial guardado'],
+                ['reto', 'quiz', 'Reto rápido', 'Práctica interactiva'],
+                ['acerca', 'info', 'Acerca de', 'Guía metodológica'],
+              ],
+            },
+          ].map((group) => (
+            <div className="main-tabs-group" key={group.title} role="group" aria-label={group.title}>
+              <p className="main-tabs-group-label">{group.title}</p>
+              {group.items.map(([tab, icon, label, hint]) => (
+                <button
+                  key={tab}
+                  className={`main-tab${activeTab === tab ? ' active' : ''}`}
+                  type="button"
+                  role="tab"
+                  aria-selected={activeTab === tab}
+                  onClick={() => setActiveTab(tab)}
+                >
+                  <span className="material-symbols-outlined" aria-hidden="true">{icon}</span>
+                  <span className="main-tab-copy">
+                    <span className="main-tab-label">{label}</span>
+                    <span className="main-tab-hint">{hint}</span>
+                  </span>
+                </button>
+              ))}
+            </div>
           ))}
         </nav>
       </header>
@@ -560,7 +624,7 @@ function App() {
             </div>
             <div className="welcome-highlights" aria-label="Funciones principales">
               <span><span className="material-symbols-outlined" aria-hidden="true">description</span> PDF y TXT</span>
-              <span><span className="material-symbols-outlined" aria-hidden="true">topic</span> 7 temas académicos</span>
+              <span><span className="material-symbols-outlined" aria-hidden="true">topic</span> {topics.length} temas académicos</span>
               <span><span className="material-symbols-outlined" aria-hidden="true">insights</span> Rankings e informes</span>
             </div>
           </div>
@@ -834,7 +898,11 @@ function App() {
                   Informe
                   <select
                     value={selectedReportIndex}
-                    onChange={(event) => setSelectedReportIndex(Number(event.target.value))}
+                    onChange={(event) => {
+                      setSelectedReportIndex(Number(event.target.value))
+                      setChatMessages([])
+                      setChatError('')
+                    }}
                   >
                     {result.informes.map((report, index) => (
                       <option key={report.tema} value={index}>{report.titulo}</option>
@@ -877,6 +945,8 @@ function App() {
                   <section className="report-section">
                     <h2>1. Introducción y metodología</h2>
                     <p>Se analizaron los documentos de la carpeta del tema mediante ingesta de PDF y TXT, puntuación TF-IDF con similitud del coseno y selección acumulada por relevancia.</p>
+                    <h3>¿De qué trata {selectedReport.titulo}?</h3>
+                    <p>{selectedReport.descripcion_tema || `Este análisis busca documentos del corpus relacionados con ${selectedReport.titulo}.`}</p>
                     <h3>Consulta booleana utilizada</h3>
                     <pre className="report-query">{selectedReport.consulta}</pre>
                     <p>La puntuación expresa la similitud del coseno como porcentaje. Los resultados se ordenan de mayor a menor relevancia; el orden es más significativo que el valor absoluto.</p>
@@ -909,11 +979,33 @@ function App() {
                     {selectedReport.grafico && (
                       <img className="report-chart" src={`${API_URL}${selectedReport.grafico}`} alt={`Relevancia para ${selectedReport.titulo}`} />
                     )}
-                    <p>El gráfico compara la relevancia de cada documento frente a la consulta del tema.</p>
+                    <p>El gráfico se genera a partir de los puntajes TF-IDF y similitud coseno de la tabla anterior; muestra los documentos mejor posicionados (hasta 20). Cada barra representa un archivo fuente del corpus, no una referencia externa.</p>
                   </section>
 
                   <section className="report-section">
-                    <h2>4. Ejemplo de evidencia</h2>
+                    <h2>4. Evidencia y fuentes analizadas</h2>
+                    <p>Los siguientes fragmentos muestran qué texto aportó cada fuente al tema. La relevancia mide coincidencia léxica con la consulta y no implica por sí sola calidad o veracidad.</p>
+                    {selectedReport.fuentes?.length ? (
+                      <div className="report-evidence-list">
+                        {selectedReport.fuentes.map((source, index) => (
+                          <article className="report-evidence" key={`${source.documento}-${index}`}>
+                            <div className="report-evidence-heading">
+                              <a href={`${API_URL}/api/sessions/${encodeURIComponent(result.session_id)}/documento?archivo=${encodeURIComponent(source.referencia || source.documento)}&tema=${encodeURIComponent(selectedReport.tema)}`} target="_blank" rel="noreferrer">
+                                <span className="material-symbols-outlined" aria-hidden="true">description</span>
+                                {source.referencia || source.documento}
+                              </a>
+                              <strong>{Number(source.relevancia).toFixed(2)}%</strong>
+                            </div>
+                            <blockquote>{source.fragmento}</blockquote>
+                          </article>
+                        ))}
+                      </div>
+                    ) : <p>No se guardaron fragmentos de fuente para este informe. Restaura o ejecuta de nuevo el análisis para generar evidencia por documento.</p>}
+                    <p className="report-source-note">Las fuentes se identifican con el nombre de los archivos cargados. No se inventan autores, años ni DOI: consulta el documento original para sus datos bibliográficos completos.</p>
+                  </section>
+
+                  <section className="report-section">
+                    <h2>5. Ejemplo destacado</h2>
                     {selectedReport.ejemplo ? (
                       <>
                         <p>Fragmento recuperado de <strong>{selectedReport.ejemplo_nombre}</strong>:</p>
@@ -923,7 +1015,7 @@ function App() {
                   </section>
 
                   <section className="report-section">
-                    <h2>5. Conclusiones</h2>
+                    <h2>6. Conclusiones</h2>
                     <ul>
                       <li>La consulta del tema recuperó {selectedReport.documentos.length} documentos relevantes de {selectedReport.total_documentos} analizados.</li>
                       <li>TF-IDF y similitud del coseno priorizan los textos que comparten más términos con la consulta.</li>
@@ -941,6 +1033,55 @@ function App() {
                   </section>
                 </article>
               )}
+
+              <section className="report-qa" aria-labelledby="report-qa-title">
+                <div className="report-qa-heading">
+                  <div>
+                    <p className="section-label">Consulta con evidencia</p>
+                    <h2 id="report-qa-title">Pregunta sobre {selectedReport?.titulo}</h2>
+                  </div>
+                  <span className="material-symbols-outlined" aria-hidden="true">forum</span>
+                </div>
+                <p className="report-qa-note">Respuestas extractivas: mostramos fragmentos del corpus con su fuente, no texto generado ni bibliografía externa.</p>
+                {chatMessages.length > 0 && (
+                  <div className="report-chat-history" aria-live="polite">
+                    {chatMessages.map((message, index) => (
+                      <article key={`${message.role}-${index}`} className={`report-chat-message ${message.role}`}>
+                        <strong>{message.role === 'user' ? 'Tú' : 'Evidencia encontrada'}</strong>
+                        <p>{message.text}</p>
+                        {message.respuestas?.map((answer, answerIndex) => (
+                          <div className="report-chat-source" key={`${answer.referencia}-${answerIndex}`}>
+                            <div>
+                              <a href={`${API_URL}/api/sessions/${encodeURIComponent(result.session_id)}/documento?archivo=${encodeURIComponent(answer.referencia)}&tema=${encodeURIComponent(selectedReport.tema)}`} target="_blank" rel="noreferrer">
+                                <span className="material-symbols-outlined" aria-hidden="true">open_in_new</span>
+                                {answer.referencia}
+                              </a>
+                              <span>Coincidencia: {Number(answer.relevancia).toFixed(2)}%</span>
+                            </div>
+                            <blockquote>{answer.fragmento}</blockquote>
+                          </div>
+                        ))}
+                      </article>
+                    ))}
+                  </div>
+                )}
+                {chatError && <p className="report-qa-error" role="alert">{chatError}</p>}
+                <form className="report-qa-form" onSubmit={askAboutCorpus}>
+                  <textarea
+                    value={chatDraft}
+                    onChange={(event) => setChatDraft(event.target.value)}
+                    placeholder="Ej.: ¿Qué método describe este documento?"
+                    aria-label="Pregunta sobre los documentos del tema"
+                    maxLength={1000}
+                    rows={2}
+                    disabled={isAsking}
+                  />
+                  <button className="primary-button" type="submit" disabled={isAsking || !chatDraft.trim()}>
+                    <span className="material-symbols-outlined" aria-hidden="true">send</span>
+                    {isAsking ? 'Buscando evidencia…' : 'Preguntar'}
+                  </button>
+                </form>
+              </section>
             </div>
           )}
 
@@ -1062,7 +1203,7 @@ function App() {
           <div className="about-heading">
             <p className="section-label">Método y tecnología</p>
             <h2>Acerca de Minería Académica</h2>
-            <p>La plataforma organiza documentos por tema y calcula cuáles se relacionan más con cada consulta. El análisis se ejecuta en el backend Python del proyecto; la interfaz web presenta y explora sus resultados.</p>
+            <p>La plataforma organiza documentos por tema, calcula su relación con cada consulta y permite preguntar sobre el corpus mediante fragmentos citados. El análisis se ejecuta en el backend Python del proyecto; el chat recupera evidencia, no genera respuestas sin fuente.</p>
           </div>
 
           <div className="about-process" aria-label="Etapas del análisis">

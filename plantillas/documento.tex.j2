@@ -142,6 +142,10 @@ Al eliminar los operadores \texttt{OR}, \texttt{AND} y \texttt{NOT} queda el
 núcleo semántico de la búsqueda, que se convierte en vector \textit{TF-IDF} y
 se compara con cada documento mediante la similitud del coseno.
 
+\subsection{¿De qué trata el tema?}
+{{ descripcion_tema }} Esta descripción orienta la lectura; los hallazgos de
+este informe se limitan al corpus analizado y a la evidencia citada más adelante.
+
 La selección es \textbf{acumulativa}: los documentos se ordenan por relevancia
 descendente y se conservan hasta alcanzar un umbral del
 {{ umbral_porcentaje }}\pcento. Si ni sumando todos los documentos se alcanza
@@ -196,7 +200,37 @@ con texto extraíble, y que el umbral no sea demasiado restrictivo
 {% endif %}
 
 % =====================================================================
-%  3. GRAFICO
+%  3. EVIDENCIA Y FUENTES DEL CORPUS
+% =====================================================================
+\section{Hallazgos y fuentes del corpus}
+\label{sec:fuentes}
+
+La tabla de relevancia muestra el orden de coincidencia léxica con la consulta,
+no una medida de calidad ni una conclusión automática sobre el contenido. Para
+explicar el ranking, se incluye un fragmento recuperado de cada documento que
+el criterio configurado seleccionó como relevante:
+
+{% if fuentes %}
+\begin{description}
+{% for fuente in fuentes %}
+      \item[\nombrearchivo{ {{ fuente.referencia }} }] Similitud con la consulta:
+                        	extbf{ {{ "%.2f"|format(fuente.relevancia) }}\pcento}.
+      \begin{quote}\small
+      {{ fuente.fragmento }}
+      \end{quote}
+{% endfor %}
+\end{description}
+
+Las referencias identifican los archivos fuente del corpus por su nombre. El
+sistema no completa automáticamente autor, año, DOI ni datos bibliográficos
+ausentes; consulte el documento original para esa información.
+{% else %}
+No hay fragmentos recuperables para citar. Revise que los archivos del corpus
+contengan texto extraíble.
+{% endif %}
+
+% =====================================================================
+%  4. GRAFICO
 % =====================================================================
 \section{Gráfico de relevancia}
 \label{sec:grafico}
@@ -212,7 +246,10 @@ con texto extraíble, y que el umbral no sea demasiado restrictivo
 La figura~\ref{fig:relevancia} muestra el porcentaje de relevancia de cada
 documento frente a la consulta del tema. Las barras más largas corresponden a
 los documentos que comparten mayor número de términos significativos con la
-búsqueda booleana de la sección~\ref{sec:query}.
+búsqueda booleana de la sección~\ref{sec:query}. El gráfico se construye con
+los mismos puntajes de la tabla de la sección~\ref{sec:relevantes} y muestra
+hasta los veinte documentos mejor posicionados; su fuente son los archivos
+identificados en la sección~\ref{sec:fuentes}.
 
 {% else %}
 \textit{No se generó gráfico: no hubo documentos que representar, o matplotlib
@@ -252,6 +289,11 @@ recuperada para este tema:
   \item La consulta booleana de \tema{ {{ titulo_titulo }} } recupera
         {{ total_relevantes }} documento(s) de los {{ total_documentos }}
         analizados en la corpus local.
+{% if documentos %}
+  \item El documento mejor posicionado es
+        \nombrearchivo{ {{ documentos[0][0] }} }, con una similitud de
+        {{ "%.2f"|format(documentos[0][1]) }}\pcento frente a la consulta.
+{% endif %}
   \item El método basado en \textit{TF-IDF} y similitud del coseno es
         totalmente local y reproducible, sin depender de servicios externos,
         claves de API ni conexión a internet.

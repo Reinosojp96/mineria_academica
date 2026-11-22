@@ -212,6 +212,23 @@ class QA:
             for nombre, fragmento in self.preguntar(pregunta, top_k)
         ]
 
+    def extraer_fragmento(
+        self,
+        documento: str,
+        pregunta: str,
+        longitud_fragmento: int = LONGITUD_FRAGMENTO,
+    ) -> str:
+        """Extrae evidencia de un documento concreto para una pregunta."""
+        if documento not in self.docs or not pregunta.strip():
+            return ""
+        return self._extraer(
+            self.docs[documento],
+            pregunta,
+            comienza=_contiene(pregunta, PALABRAS_DEFINICION),
+            cierra=_contiene(pregunta, PALABRAS_RESUMEN),
+            longitud=longitud_fragmento,
+        )
+
     # ------------------------------------------------------------------
     # Extraccion de fragmentos
     # ------------------------------------------------------------------
